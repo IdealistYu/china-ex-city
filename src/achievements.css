@@ -11,20 +11,29 @@
 #achievements:focus { outline: none; }
 
 .ach-head {
-  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 1; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
   /* 左右留白与下方内容列（最宽 1040px）对齐 */
   padding: max(12px, env(safe-area-inset-top)) max(var(--gap), calc((100% - 1040px) / 2 + var(--gap))) 12px;
   background: color-mix(in srgb, var(--bg) 94%, transparent); /* 不用 backdrop-filter：滚动时每帧重算模糊，手机上会拖慢卡片动画 */
   border-bottom: 1.5px dashed var(--divider);
 }
-.ach-head .btn { height: 38px; }
-/* 标题与地图页面包屑同款："城市制霸 › 成就" */
-.ach-head h1 { display: flex; align-items: baseline; gap: 6px; min-width: 0; margin: 0; font-size: 22px; white-space: nowrap; }
-.ach-brand { color: var(--muted); font-size: 20px; letter-spacing: 1px; }
-.ach-head .sep { color: var(--muted); }
+.ach-head .btn { height: 38px; justify-self: start; }
+/* 标题："成就" + 金色奖杯，在顶栏里居中（左边是返回按钮，右边留空对称） */
+.ach-head h1 { grid-column: 2; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 24px; white-space: nowrap; }
+.ach-trophy {
+  width: 40px; height: 44px; overflow: visible;
+  filter: drop-shadow(0 0 6px rgba(255, 200, 60, .75)) drop-shadow(1.5px 2px 0 rgba(0,0,0,.18));
+}
+/* 奖杯特效：光带每隔几秒扫过杯身（裁剪在奖杯形状内），三颗星轮流闪烁 */
+.tro-glint { animation: tro-glint 3.6s ease-in-out infinite; }
+@keyframes tro-glint { 0%, 55% { transform: translateX(0) rotate(20deg); } 100% { transform: translateX(56px) rotate(20deg); } }
+.tro-glint { transform-box: view-box; transform-origin: 20px 22px; }
+.tro-spark { transform-box: fill-box; transform-origin: center; animation: tro-twinkle 2.4s ease-in-out infinite; }
+@keyframes tro-twinkle { 0%, 100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .tro-glint, .tro-spark { animation: none; } .tro-glint { opacity: 0; } }
 @media (max-width: 700px) {
-  .ach-head h1 { font-size: 18px; }
-  .ach-brand { font-size: 15px; }
+  .ach-head h1 { font-size: 20px; gap: 6px; }
+  .ach-trophy { width: 32px; height: 35px; }
 }
 
 .ach-main { max-width: 1040px; margin: 0 auto; padding: 20px max(var(--gap), env(safe-area-inset-right)) 48px max(var(--gap), env(safe-area-inset-left)); }
