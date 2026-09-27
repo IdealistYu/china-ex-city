@@ -64,16 +64,20 @@
 .ach-body h2 small { font-size: 14px; color: var(--muted); font-weight: normal; }
 .ach-empty { margin: 48px 0; text-align: center; color: var(--muted); }
 
-.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 18px; }
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
 /* 卡槽：不随卡片上抬、倾斜而移动，悬停判断以它为准，指针停在卡片边缘时不会来回抖动 */
-.ach-slot { display: flex; }
+.ach-slot { display: flex; container-type: inline-size; }
 .ach-slot > .ach-card { flex: 1; }
 
-/* ---------- 卡牌 ---------- */
+/* ---------- 卡牌 ----------
+ * 卡片内的所有尺寸都按"基准宽 160px"设计，乘以 --k = 卡片宽 / 160（100cqw 为所在卡槽或展示舞台的宽度）。
+ * 列表里的卡片与放大展示的卡片共用同一套规则，放大后就是原卡片的等比例放大，飞出、飞回没有跳变。
+ */
 .ach-card {
+  --k: calc(100cqw / 160);
   position: relative; display: flex; flex-direction: column; overflow: hidden;
-  border: 2.5px solid var(--ink); border-radius: 12px; background: #fff;
-  box-shadow: 3px 5px 0 var(--shadow);
+  border: calc(var(--k) * 2.5) solid var(--ink); border-radius: calc(var(--k) * 12); background: #fff;
+  box-shadow: calc(var(--k) * 3) calc(var(--k) * 5) 0 var(--shadow);
   /* 悬停倾斜：--rx / --ry 由脚本按指针位置写入 */
   transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
   transition: transform .35s cubic-bezier(.2, .8, .2, 1), box-shadow .35s;
@@ -94,37 +98,39 @@
 .ach-card.done:focus-visible { --lift: -8px; }
 
 .ach-art {
-  position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; overflow: hidden;
-  border-bottom: 2px solid var(--ink);
+  position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3.4; overflow: hidden;
+  border-bottom: calc(var(--k) * 2) solid var(--ink);
   background: var(--art);
 }
 
 /* 徽章：白底圆牌 + 卡面文字，字越多字号越小 */
 .ach-glyph {
   position: relative; z-index: 2;
-  display: flex; align-items: center; justify-content: center; width: 72px; height: 72px;
-  border: 2.5px solid var(--ink); border-radius: 50%; background: #fff;
-  box-shadow: 2px 3px 0 rgba(0,0,0,.18);
-  font-size: 34px; font-weight: bold; line-height: 1;
+  display: flex; align-items: center; justify-content: center; width: calc(var(--k) * 66); height: calc(var(--k) * 66);
+  border: calc(var(--k) * 2.5) solid var(--ink); border-radius: 50%; background: #fff;
+  box-shadow: calc(var(--k) * 2) calc(var(--k) * 3) 0 rgba(0,0,0,.18);
+  font-size: calc(var(--k) * 32); font-weight: bold; line-height: 1;
 }
-.ach-glyph[data-len="2"] { font-size: 28px; }
-.ach-glyph[data-len="3"] { font-size: 24px; }
-.ach-glyph[data-len="4"] { font-size: 19px; }
+.ach-glyph[data-len="2"] { font-size: calc(var(--k) * 26); }
+.ach-glyph[data-len="3"] { font-size: calc(var(--k) * 22); }
+.ach-glyph[data-len="4"] { font-size: calc(var(--k) * 18); }
 
 .ach-new {
-  position: absolute; top: 8px; right: 8px; z-index: 3; padding: 1px 7px;
-  border: 2px solid var(--ink); border-radius: 6px; background: var(--l5);
-  font-size: 12px; font-weight: bold;
+  position: absolute; top: calc(var(--k) * 7); right: calc(var(--k) * 7); z-index: 3; padding: calc(var(--k) * 1) calc(var(--k) * 6);
+  border: calc(var(--k) * 2) solid var(--ink); border-radius: calc(var(--k) * 6); background: var(--l5);
+  font-size: calc(var(--k) * 11); font-weight: bold;
 }
 
-.ach-info { flex: 1; padding: 10px 12px 4px; }
-.ach-info h3 { margin: 0 0 4px; font-size: 17px; }
-.ach-info p { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.ach-info { flex: 1; padding: calc(var(--k) * 10) calc(var(--k) * 10) calc(var(--k) * 4); text-align: center; }
+.ach-info h3 { margin: 0 0 calc(var(--k) * 4); font-size: calc(var(--k) * 16); }
+.ach-info p { margin: 0; font-size: calc(var(--k) * 12); line-height: 1.45; color: var(--muted); }
 
-.ach-foot { display: flex; align-items: center; gap: 8px; padding: 8px 12px 12px; font-size: 12px; }
-.ach-tier { flex: none; padding: 0 6px; border: 1.5px solid var(--ink); border-radius: 5px; background: var(--tier); font-weight: bold; }
-.ach-state { margin-left: auto; font-weight: bold; }
-.ach-progress { height: 10px; border-width: 1.5px; }
+.ach-foot { display: flex; align-items: center; gap: calc(var(--k) * 7); padding: calc(var(--k) * 8) calc(var(--k) * 10) calc(var(--k) * 12); font-size: calc(var(--k) * 11.5); }
+.ach-card.done .ach-foot { justify-content: center; }
+.ach-tier { flex: none; padding: 0 calc(var(--k) * 5); border: calc(var(--k) * 1.5) solid var(--ink); border-radius: calc(var(--k) * 5); background: var(--tier); font-weight: bold; }
+.ach-state { font-weight: bold; }
+.ach-card.locked .ach-state { margin-left: auto; }
+.ach-progress { height: calc(var(--k) * 10); border-width: calc(var(--k) * 1.5); }
 .ach-count { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* ---------- 稀有度：一级比一级多一种效果 ----------
@@ -143,7 +149,7 @@
 .ach-card[data-tier="silver"] {
   --tier: linear-gradient(135deg, #eef2f6, #c3ccd9 50%, #eef2f6);
   --art:
-    repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 calc(var(--k) * 1), transparent calc(var(--k) * 1) calc(var(--k) * 3)),
     linear-gradient(135deg, #eef2f6 0%, #c3ccd9 30%, #f8fafc 48%, #b5bfcd 70%, #e4e9ef 100%);
 }
 .ach-card[data-tier="gold"] {
@@ -157,12 +163,12 @@
 
 /* 内框：银单线、金双线、传说彩虹流动（只有已解锁的卡片才有） */
 .ach-card.done:is([data-tier="silver"], [data-tier="gold"], [data-tier="legend"])::before {
-  content: ''; position: absolute; inset: 4px; z-index: 3; pointer-events: none; border-radius: 8px;
-  border: 2px solid #b9c3d1;
+  content: ''; position: absolute; inset: calc(var(--k) * 4); z-index: 3; pointer-events: none; border-radius: calc(var(--k) * 8);
+  border: calc(var(--k) * 2) solid #b9c3d1;
 }
-.ach-card.done[data-tier="gold"]::before { border-color: #e2a92a; box-shadow: inset 0 0 0 2px #fff4c8, inset 0 0 0 3.5px #efc453; }
+.ach-card.done[data-tier="gold"]::before { border-color: #e2a92a; box-shadow: inset 0 0 0 calc(var(--k) * 2) #fff4c8, inset 0 0 0 calc(var(--k) * 3.5) #efc453; }
 .ach-card.done[data-tier="legend"]::before {
-  border: 3px solid transparent;
+  border: calc(var(--k) * 3) solid transparent;
   background: linear-gradient(90deg, #ff7e7e, #ffe57e, #a8ffbe, #88aeff, #d7a8ff, #ff7e7e) border-box;
   background-size: 300% 100%;
   -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
@@ -172,12 +178,15 @@
 @keyframes ach-flow { to { background-position: 300% 0; } }
 
 /* 徽章圆环 */
-.ach-card.done[data-tier="silver"] .ach-glyph { box-shadow: 2px 3px 0 rgba(0,0,0,.18), inset 0 0 0 4px #dde3ea; }
-.ach-card.done[data-tier="gold"] .ach-glyph { box-shadow: 2px 3px 0 rgba(0,0,0,.18), inset 0 0 0 3px #eab63a, inset 0 0 0 5px #fff, inset 0 0 0 7px #f5d06a; }
+.ach-card.done[data-tier="silver"] .ach-glyph { box-shadow: calc(var(--k) * 2) calc(var(--k) * 3) 0 rgba(0,0,0,.18), inset 0 0 0 calc(var(--k) * 4) #dde3ea; }
+.ach-card.done[data-tier="gold"] .ach-glyph {
+  box-shadow: calc(var(--k) * 2) calc(var(--k) * 3) 0 rgba(0,0,0,.18),
+    inset 0 0 0 calc(var(--k) * 3) #eab63a, inset 0 0 0 calc(var(--k) * 5) #fff, inset 0 0 0 calc(var(--k) * 7) #f5d06a;
+}
 .ach-card.done[data-tier="legend"] .ach-glyph {
-  border: 4px solid transparent;
+  border: calc(var(--k) * 4) solid transparent;
   background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, #ff7e7e, #ffe57e, #a8ffbe, #88aeff, #d7a8ff) border-box;
-  box-shadow: 0 0 0 2px var(--ink), 2px 3px 0 2px rgba(0,0,0,.18);
+  box-shadow: 0 0 0 calc(var(--k) * 2) var(--ink), calc(var(--k) * 2) calc(var(--k) * 3) 0 calc(var(--k) * 2) rgba(0,0,0,.18);
 }
 
 /* 传说卡面：彩虹缓慢流动 */
@@ -188,11 +197,11 @@
 .ach-card.done[data-tier="gold"] .ach-art::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(circle at 18% 22%, #fff 0 1.6px, transparent 2.6px),
-    radial-gradient(circle at 80% 18%, #fff 0 1.2px, transparent 2.2px),
-    radial-gradient(circle at 86% 70%, #fff 0 1.8px, transparent 2.8px),
-    radial-gradient(circle at 26% 80%, #fff 0 1.2px, transparent 2.2px),
-    radial-gradient(circle at 62% 12%, #fff 0 1px, transparent 2px);
+    radial-gradient(circle at 18% 22%, #fff 0 calc(var(--k) * 1.6), transparent calc(var(--k) * 2.6)),
+    radial-gradient(circle at 80% 18%, #fff 0 calc(var(--k) * 1.2), transparent calc(var(--k) * 2.2)),
+    radial-gradient(circle at 86% 70%, #fff 0 calc(var(--k) * 1.8), transparent calc(var(--k) * 2.8)),
+    radial-gradient(circle at 26% 80%, #fff 0 calc(var(--k) * 1.2), transparent calc(var(--k) * 2.2)),
+    radial-gradient(circle at 62% 12%, #fff 0 calc(var(--k) * 1), transparent calc(var(--k) * 2));
   animation: ach-twinkle 2.4s ease-in-out infinite alternate;
 }
 @keyframes ach-twinkle { from { opacity: .25; } to { opacity: 1; } }
@@ -243,31 +252,16 @@
   touch-action: none;
 }
 .ach-show[hidden] { display: none; }
-.ach-stage { perspective: 1000px; }
+.ach-stage { width: min(280px, 72vw); perspective: 1000px; container-type: inline-size; }
 .ach-show-hint { margin: 0; color: rgba(255,255,255,.7); font-size: 13px; }
 
-.ach-card.big {
-  width: min(320px, 78vw); cursor: inherit;
-  border-width: 3px; border-radius: 18px; box-shadow: 8px 14px 0 rgba(0,0,0,.35);
-  transition: transform .15s ease-out;
-}
+/* 放大的卡片与列表里的卡片是同一套尺寸规则（按舞台宽度等比例放大）；
+   只多了展示时一直显示的高光、传说镭射、金 / 传说光晕，以及落定时的一道闪光 */
+.ach-card.big { width: 100%; cursor: inherit; transition: transform .15s ease-out; }
 .ach-card.big::after { opacity: 1; }
 .ach-card.big[data-tier="legend"] .ach-art::before { opacity: 1; }
-.ach-card.big[data-tier="gold"] { box-shadow: 8px 14px 0 rgba(0,0,0,.35), 0 0 48px 6px rgba(255,196,50,.55); }
-.ach-card.big[data-tier="legend"] { box-shadow: 8px 14px 0 rgba(0,0,0,.35), -14px 0 50px rgba(136,174,255,.6), 14px 0 50px rgba(255,126,126,.6); }
-.ach-card.big.done::before { inset: 6px; border-radius: 12px; }
-.ach-card.big .ach-art { aspect-ratio: 4 / 3.4; border-bottom-width: 3px; }
-.ach-card.big .ach-glyph { width: 118px; height: 118px; border-width: 3.5px; font-size: 58px; box-shadow: 3px 5px 0 rgba(0,0,0,.2); }
-.ach-card.big .ach-glyph[data-len="2"] { font-size: 46px; }
-.ach-card.big .ach-glyph[data-len="3"] { font-size: 40px; }
-.ach-card.big .ach-glyph[data-len="4"] { font-size: 32px; }
-.ach-card.big .ach-info { padding: 16px 20px 6px; text-align: center; }
-.ach-card.big .ach-info h3 { font-size: 26px; margin: 4px 0 8px; }
-.ach-card.big .ach-info p { font-size: 14.5px; }
-.ach-kind { font-size: 12px; color: var(--muted); letter-spacing: .1em; }
-.ach-card.big .ach-foot { justify-content: center; padding: 12px 20px 20px; font-size: 14px; }
-.ach-card.big .ach-state { margin-left: 0; }
-.ach-card.big .ach-tier { padding: 1px 10px; border-width: 2px; }
+.ach-card.big[data-tier="gold"] { box-shadow: calc(var(--k) * 3) calc(var(--k) * 5) 0 var(--shadow), 0 0 48px 6px rgba(255,196,50,.55); }
+.ach-card.big[data-tier="legend"] { box-shadow: calc(var(--k) * 3) calc(var(--k) * 5) 0 var(--shadow), -14px 0 50px rgba(136,174,255,.6), 14px 0 50px rgba(255,126,126,.6); }
 
 /* 飞到中央后扫过一道闪光 */
 .ach-card.big.shine .ach-art::after {
@@ -284,11 +278,5 @@
 
 @media (max-width: 520px) {
   .ach-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .ach-art { aspect-ratio: 16 / 10; }
-  .ach-glyph { width: 60px; height: 60px; font-size: 28px; }
-  .ach-glyph[data-len="2"] { font-size: 23px; }
-  .ach-glyph[data-len="3"] { font-size: 20px; }
-  .ach-glyph[data-len="4"] { font-size: 16px; }
-  .ach-info h3 { font-size: 15.5px; }
   .ach-total b { font-size: 32px; }
 }

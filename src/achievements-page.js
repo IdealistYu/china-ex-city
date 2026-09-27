@@ -13,7 +13,7 @@ const summary = page.querySelector('.ach-summary');
 const readButton = page.querySelector('.ach-read');
 let filter = 'all';
 
-// big：展示层里放大的那张（多一行类别，不显示 NEW）
+// big：展示层里放大的那张。结构与列表里的完全相同（等比例放大），只是不显示 NEW、稀有度标签后加上类别
 const card = (a, big = false) => {
   const eggLocked = a.egg && !a.done; // 彩蛋：未达成时名称、条件、进度都保密
   const pct = Math.round(a.value / a.goal * 100);
@@ -25,12 +25,11 @@ const card = (a, big = false) => {
   return `<article class="ach-card ${a.done ? 'done' : 'locked'}${big ? ' big' : ''}" data-tier="${a.tier}" data-id="${a.id}"${attrs}>
   <div class="ach-art"><span class="ach-glyph" data-len="${[...glyph].length}">${esc(glyph)}</span>${isNew ? '<span class="ach-new">NEW</span>' : ''}</div>
   <div class="ach-info">
-    ${big ? `<div class="ach-kind">${esc(CATEGORIES.find(c => c.id === a.cat).name)}成就 · ${a.egg ? '彩蛋' : TIERS[a.tier]}</div>` : ''}
     <h3>${eggLocked ? '???' : esc(a.name)}</h3>
     <p>${esc(desc)}</p>
   </div>
   <div class="ach-foot">
-    <span class="ach-tier">${a.egg ? '彩蛋' : TIERS[a.tier]}</span>
+    <span class="ach-tier">${a.egg ? '彩蛋' : TIERS[a.tier]}${big ? ` · ${esc(CATEGORIES.find(c => c.id === a.cat).name)}` : ''}</span>
     ${a.done ? '<span class="ach-state">已解锁</span>' : eggLocked ? '<span class="ach-state">未解锁</span>' : `<span class="ach-progress"><i style="width:${pct}%"></i></span><span class="ach-count">${a.value}/${a.goal}</span>`}
   </div>
 </article>`;
