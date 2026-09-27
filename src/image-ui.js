@@ -1,7 +1,5 @@
 // "保存图片"按钮与导出结果弹层
 import { allLevels } from './store.js';
-import { exportImage } from './export.js';
-import { exportProvinceImage } from './export-province.js';
 import { provinceByCode } from './map.js';
 import { $ } from './dom.js';
 import { openLayer, closeLayer } from './layers.js';
@@ -27,7 +25,10 @@ saveButton.addEventListener('click', async () => {
   saveButton.disabled = true;
   document.documentElement.dataset.busy = '';
   try {
-    const url = target ? await exportProvinceImage(target, allLevels()) : await exportImage(allLevels());
+    // 出图代码只在保存时用到，点击时再加载（首屏少下载约 18KB）
+    const url = target
+      ? await (await import('./export-province.js')).exportProvinceImage(target, allLevels())
+      : await (await import('./export.js')).exportImage(allLevels());
     if (outputUrl) URL.revokeObjectURL(outputUrl); // 释放上一次导出的图片
     outputUrl = url;
     output.querySelector('img').src = url;

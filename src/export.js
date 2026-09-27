@@ -6,7 +6,8 @@ import { canDownload, download } from './download.js';
 import { esc } from './dom.js';
 
 const SCALE = 2;
-const FONT = `'CityEx Sans','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif`;
+// 导出图的字体（单省图 export-province.js 共用）
+export const FONT = `'CityEx Sans','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif`;
 
 export const BG = '#f3efe6';
 // 外框：图片整体做成一张卡片（深色描边、圆角、硬投影），外面留一圈白色底，放在浅色界面里几乎看不出来

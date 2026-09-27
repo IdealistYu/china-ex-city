@@ -24,4 +24,6 @@ const inlineCss = () => ({
 export default defineConfig({
   base: './',
   plugins: [inlineCss()],
+  // 地图数据较大（约 200KB）：整份以 JSON.parse("...") 形式输出，比写成 JS 对象字面量解析更快
+  json: { stringify: true },
 });

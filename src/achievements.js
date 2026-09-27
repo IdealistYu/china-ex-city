@@ -1,6 +1,6 @@
 // 成就：全部由当前标记数据推算，不单独存档（导入备份、多标签页同步后自动一致）。
 // 每个成就：id、类别、名称、说明、稀有度（bronze / silver / gold / legend）、卡面文字、目标值、进度函数；
-// secret 为隐藏成就，解锁前不显示名称和说明；egg 为彩蛋，不计入总进度，解锁前名称、条件、进度都不透露
+// egg 为彩蛋：不计入总进度，解锁前名称、条件、进度都不透露
 import { units, provinces } from './map.js';
 
 export const TIERS = {
