@@ -294,7 +294,8 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 [data-view="country"] .prov { cursor: pointer; }
 
 /* 省视图：淡化邻省（用浅色填充而不是半透明，否则底下的投影会透上来发灰） */
-[data-view="province"] .prov:not(.active) .unit { fill: var(--dim); stroke: var(--dim-line); }
+/* 省视图的邻省：淡化显示，但可以点击切换过去（港澳、直辖市直接标记），所以同样是手指光标 */
+[data-view="province"] .prov:not(.active) .unit { fill: var(--dim); stroke: var(--dim-line); cursor: pointer; }
 [data-view="province"] .prov:not(.active) .unit[data-level] { fill: color-mix(in srgb, var(--c) 35%, var(--dim)); }
 [data-view="province"] .prov.active .unit { cursor: pointer; stroke-width: 1px; stroke: var(--line-city-active); }
 
@@ -364,6 +365,7 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
   .backup button:hover, #picker .options button:hover, .ach-filter button:not([aria-pressed="true"]):hover, .ach-read:hover { filter: brightness(.95); }
   [data-view="country"] .prov:hover .unit { filter: brightness(.93); }
   [data-view="province"] .prov.active .unit:hover { filter: brightness(.93); }
+  [data-view="province"] .prov:not(.active):hover .unit { filter: brightness(.95); }
 }
 
 /* ============ 响应式 ============ */
