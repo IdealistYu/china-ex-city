@@ -61,6 +61,9 @@
     <a id="help" class="btn icon-btn" href="about.html" aria-label="使用说明" title="使用说明">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 8.4a4.4 4.4 0 1 1 6.3 4c-1.1.5-1.9 1.4-1.9 2.6v.8" stroke-width="2.6"/><circle class="dot" cx="12" cy="19.6" r="1.6"/></svg>
     </a>
+    <button id="trophy" class="btn icon-btn" type="button" aria-label="成就" title="成就">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v4M8 20h8"/></svg>
+    </button>
     <a id="repo" class="btn icon-btn" href="https://github.com/IdealistYu/city-ex" target="_blank" rel="noopener" aria-label="GitHub 代码仓库" title="GitHub 代码仓库">
       <svg class="solid" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
     </a>
@@ -175,6 +178,23 @@
   <div id="toast" role="status" aria-live="polite" hidden></div>
 
   <noscript><p class="noscript">城市制霸需要开启 JavaScript 才能使用。<a href="about.html">查看使用说明</a></p></noscript>
+  <!-- 成就页：顶栏奖杯按钮打开，内容由 achievements-ui.js 生成 -->
+  <div id="achievements" role="dialog" aria-modal="true" aria-labelledby="ach-title" hidden>
+    <header class="ach-head">
+      <button class="btn ach-back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>返回地图</button>
+      <h1 id="ach-title">成就</h1>
+    </header>
+    <div class="ach-main">
+      <div class="ach-summary"></div>
+      <div class="ach-filter" role="group" aria-label="筛选">
+        <button type="button" data-filter="all">全部</button><button type="button" data-filter="done">已解锁</button><button type="button" data-filter="todo">未解锁</button>
+      </div>
+      <div class="ach-body"></div>
+    </div>
+    <!-- 点开已解锁的卡片：放大展示 -->
+    <div class="ach-show" hidden><div class="ach-stage"></div><p class="ach-show-hint">点击任意处关闭</p></div>
+  </div>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
