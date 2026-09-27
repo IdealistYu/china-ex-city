@@ -12,9 +12,9 @@ import { layoutLabels, leaderEnd } from './label-layout.js';
 import { attachGestures } from './gesture.js';
 import { createLocator } from './locator.js';
 import { openPicker, closePicker, isPickerOpen, pickerContains } from './picker.js';
-import { isOutputOpen, closeOutput, setExportTarget } from './image-ui.js';
+import { setExportTarget } from './image-ui.js';
 import './backup-ui.js';
-import './achievements-ui.js';
+import { ACHIEVEMENTS_HASH } from './achievements-ui.js';
 import { $, narrowScreen } from './dom.js';
 
 const svg = $('#map');
@@ -329,10 +329,16 @@ const showCountry = async () => {
   await flyTo();
 };
 
-// hash 路由：#/440000 表示广东省视图，浏览器返回即缩回全国
+// hash 路由：#/440000 表示广东省视图，浏览器返回即缩回全国。
+// #/achievements 是盖在地图上的成就页（achievements-ui.js 负责），地图保持不动；
+// 从成就页等弹层返回时，目标省份与当前相同，也不重新飞行（保留用户的缩放位置）
+let routed = false;
 const route = () => {
   const code = location.hash.match(/^#\/(\d{6})$/)?.[1];
-  if (code && provinceByCode.has(code) && !provinceByCode.get(code).single) enterProvince(code);
+  const target = code && provinceByCode.has(code) && !provinceByCode.get(code).single ? code : null;
+  if (routed && (location.hash === ACHIEVEMENTS_HASH || target === activeProvince)) return;
+  routed = true;
+  if (target) enterProvince(target);
   else showCountry();
 };
 addEventListener('hashchange', route);
@@ -445,10 +451,10 @@ document.addEventListener('click', e => {
   if (isPickerOpen() && !pickerContains(e.target) && !e.target.closest('#city-list')) closePicker();
 });
 
+// Esc：全屏弹层由 layers.js 先处理；原生对话框由浏览器处理
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  if (isOutputOpen()) closeOutput();
-  else if (locator.isOpen()) locator.close();
+  if (e.key !== 'Escape' || document.querySelector('dialog[open]')) return;
+  if (locator.isOpen()) locator.close();
   else if (isPickerOpen()) closePicker();
   else if (activeProvince) goBack();
 });

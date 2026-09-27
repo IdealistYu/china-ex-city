@@ -1,6 +1,6 @@
 // 成就：全部由当前标记数据推算，不单独存档（导入备份、多标签页同步后自动一致）。
 // 每个成就：id、类别、名称、说明、稀有度（bronze / silver / gold / legend）、卡面文字、目标值、进度函数；
-// secret 为隐藏成就，解锁前不显示名称和说明
+// secret 为隐藏成就，解锁前不显示名称和说明；egg 为彩蛋，不计入总进度，解锁前名称、条件、进度都不透露
 import { units, provinces } from './map.js';
 
 export const TIERS = {
@@ -81,7 +81,7 @@ const DEFS = [
   { id: 's100', cat: 'score', tier: 'bronze', glyph: '100', name: '百分选手', desc: '总分达到 100 分', goal: 100, of: c => c.score },
   { id: 's500', cat: 'score', tier: 'silver', glyph: '500', name: '高分玩家', desc: '总分达到 500 分', goal: 500, of: c => c.score },
   { id: 's1000', cat: 'score', tier: 'gold', glyph: '1000', name: '千分大师', desc: '总分达到 1000 分', goal: 1000, of: c => c.score },
-  { id: 's1850', cat: 'score', tier: 'legend', glyph: '1850', name: '先活个 370 岁', desc: '拿到满分 1850 分：每座城市都住满一年以上', goal: 1850, of: c => c.score, secret: true },
+  { id: 's1850', cat: 'score', tier: 'legend', glyph: '1850', name: '彭祖再世', desc: '恭喜您活到了370岁！', goal: 1850, of: c => c.score, egg: true }, // 与等级类成就互斥（全部居住时其他等级为 0），只作彩蛋
 ];
 
 // 推算所需的汇总数据

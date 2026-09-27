@@ -53,6 +53,9 @@
   <style>
     :root { --bg: #f3efe6; --ink: #222; --muted: #6b665c; --card: #fff; --line: #d8d2c4; }
     * { box-sizing: border-box; }
+    /* 隐藏滚动条，仍可用滚轮、触控板、键盘滚动 */
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
     body {
       margin: 0; background: var(--bg); color: var(--ink);
       font: 16px/1.75 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;

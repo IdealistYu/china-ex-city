@@ -23,6 +23,7 @@
   --paper: #fbf9f4;        /* 南海插图卡片底色 */
   --soft: #f7f4ee;         /* 对话框里的说明底色 */
   --hover: #f4f1ea;        /* 白底按钮的悬停色 */
+  --scrim: rgba(20, 18, 14, .72); /* 展示类弹层（图片预览、成就展示）的深色背景 */
   --shadow: rgba(0, 0, 0, .12);
   --focus: #3b82f6;
   --accent: #e0402a;       /* 聚焦城市的闪烁描边 */
@@ -72,7 +73,7 @@ button:disabled { cursor: progress; opacity: .7; }
 }
 .btn.primary { background: var(--ink); color: #fff; }
 .btn.danger { background: var(--l5); }
-.btn:active { transform: translateY(1px); box-shadow: none; }
+.btn { transition: transform .1s, box-shadow .1s; }
 .btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .btn svg.solid { fill: currentColor; stroke: none; }
 .btn { color: var(--ink); text-decoration: none; }
@@ -257,14 +258,24 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
 #picker .options button { display: block; width: 100%; padding: 6px 10px; border: 0; background: var(--c); }
 #picker .options button.current { font-weight: bold; box-shadow: inset 4px 0 0 var(--ink); }
 
+/* ---------- 按下反馈（写在悬停规则之后） ---------- */
+.btn:active { transform: translateY(1px); box-shadow: none; }
+#brush button:active, #city-list button:active, .loc-grid button:active, .loc-list button:active, .loc-head button:active,
+.backup button:active, #picker .options button:active, .ach-filter button:active, .ach-read:active { filter: brightness(.88); }
+
+/* ---------- 弹层统一的淡入（全屏弹层由 layers.js 做，原生对话框在这里） ---------- */
+dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
+@keyframes fade-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { dialog[open], dialog[open]::backdrop { animation: none; } }
+
 /* ---------- 导出结果 ---------- */
 #output {
   position: fixed; inset: 0; z-index: 20; padding: 16px;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-  background: rgba(255, 255, 255, .96);
+  background: var(--scrim); backdrop-filter: blur(3px);
 }
-#output img { max-width: min(100%, 720px); max-height: 75vh; box-shadow: 0 5px 20px var(--shadow); }
-#output p { margin: 0; color: var(--muted); }
+#output img { max-width: min(100%, 720px); max-height: 75vh; border-radius: 6px; box-shadow: 0 8px 30px rgba(0,0,0,.35); }
+#output p { margin: 0; color: rgba(255, 255, 255, .75); font-size: 13px; }
 
 /* ============ 地图 ============ */
 #map path { vector-effect: non-scaling-stroke; stroke-linejoin: round; }
@@ -347,9 +358,10 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
 /* ============ 悬停（仅限有悬停能力的设备，触屏点过后不会卡在高亮状态） ============ */
 @media (hover: hover) {
   [data-view="province"] .crumb-root:hover { color: var(--ink); text-decoration: underline; }
-  .backup button:hover { background: var(--hover); }
-  .loc-grid button:hover, .loc-list button:hover, .loc-head button:hover { filter: brightness(.94); }
-  #picker .options button:hover { filter: brightness(.95); }
+  /* 按钮反馈统一：主按钮悬停微抬，小标签按钮悬停微暗 */
+  .btn:hover { transform: translateY(-1px); box-shadow: 3px 4px 0 var(--shadow); }
+  #brush button:hover, #city-list button:hover, .loc-grid button:hover, .loc-list button:hover, .loc-head button:hover,
+  .backup button:hover, #picker .options button:hover, .ach-filter button:not([aria-pressed="true"]):hover, .ach-read:hover { filter: brightness(.95); }
   [data-view="country"] .prov:hover .unit { filter: brightness(.93); }
   [data-view="province"] .prov.active .unit:hover { filter: brightness(.93); }
 }
