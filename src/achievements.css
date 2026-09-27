@@ -31,16 +31,33 @@
 }
 .ach-bar i, .ach-progress i { display: block; height: 100%; background: var(--l3); }
 .ach-bar i { background: var(--legend); }
-.ach-read {
-  flex: none; padding: 3px 10px; border: 1.5px solid var(--ink); border-radius: 6px; background: #fff;
-  font: inherit; font-size: 13px; color: var(--ink); cursor: pointer;
-}
 
 /* 筛选 */
-.ach-filter { display: inline-flex; margin: 18px 0 4px; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: #fff; }
+.ach-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 18px 0 4px; }
+.ach-filter { display: inline-flex; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: #fff; }
 .ach-filter button { padding: 5px 14px; border: 0; background: none; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; }
 .ach-filter button + button { border-left: 2px solid var(--ink); }
 .ach-filter button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+/* 全部标为已看：与筛选同高的粗边框按钮，靠右；对勾 + 红色数量角标（呼应卡片上的 NEW） */
+.ach-read {
+  display: inline-flex; align-items: center; gap: 6px; margin-left: auto;
+  padding: 5px 10px 5px 9px; border: 2px solid var(--ink); border-radius: 8px; background: #fff;
+  box-shadow: 2px 3px 0 var(--shadow);
+  font: inherit; font-size: 14px; color: var(--ink); cursor: pointer;
+}
+.ach-read[hidden] { display: none; }
+.ach-read .short { display: none; }
+/* 小屏（如 320 宽）：筛选收窄、按钮文字缩短，保证与筛选同一行 */
+@media (max-width: 380px) {
+  .ach-filter button { padding: 5px 11px; }
+  .ach-read .long { display: none; }
+  .ach-read .short { display: inline; }
+}
+.ach-read svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.ach-read b {
+  min-width: 20px; padding: 0 5px; border: 1.5px solid var(--ink); border-radius: 10px; background: var(--l5);
+  font-size: 12px; line-height: 17px; text-align: center;
+}
 
 .ach-body section { margin-top: 28px; }
 .ach-body h2 { display: flex; align-items: baseline; gap: 10px; margin: 0 0 14px; font-size: 20px; }

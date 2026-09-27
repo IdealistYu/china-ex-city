@@ -187,8 +187,14 @@
     </header>
     <div class="ach-main">
       <div class="ach-summary"></div>
-      <div class="ach-filter" role="group" aria-label="筛选">
-        <button type="button" data-filter="all">全部</button><button type="button" data-filter="done">已解锁</button><button type="button" data-filter="todo">未解锁</button>
+      <!-- 筛选与"全部标为已看"同一行：后者消失时行高不变，下方内容不跳动 -->
+      <div class="ach-tools">
+        <div class="ach-filter" role="group" aria-label="筛选">
+          <button type="button" data-filter="all">全部</button><button type="button" data-filter="done">已解锁</button><button type="button" data-filter="todo">未解锁</button>
+        </div>
+        <button class="ach-read" type="button" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span class="long">全部标为已看</span><span class="short">全部已看</span><b></b>
+        </button>
       </div>
       <div class="ach-body"></div>
     </div>

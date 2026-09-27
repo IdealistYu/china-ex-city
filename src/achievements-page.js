@@ -10,6 +10,7 @@ import './achievements.css';
 const page = $('#achievements');
 const grid = page.querySelector('.ach-body');
 const summary = page.querySelector('.ach-summary');
+const readButton = page.querySelector('.ach-read');
 let filter = 'all';
 
 // big：展示层里放大的那张（多一行类别，不显示 NEW）
@@ -41,10 +42,9 @@ export const render = () => {
   // 彩蛋不计入进度
   const counted = list.filter(a => !a.egg);
   const done = counted.filter(a => a.done).length;
-  const unseen = unseenCount();
   summary.innerHTML = `<div class="ach-total"><b>${done}</b> / ${counted.length}</div>
-<div class="ach-bar"><i style="width:${done / counted.length * 100}%"></i></div>
-${unseen ? `<button class="ach-read" type="button">全部标为已看（${unseen}）</button>` : ''}`;
+<div class="ach-bar"><i style="width:${done / counted.length * 100}%"></i></div>`;
+  syncReadButton();
   const shown = list.filter(a => filter === 'all' || (filter === 'done' ? a.done : !a.done));
   grid.innerHTML = CATEGORIES.map(c => {
     const items = shown.filter(a => a.cat === c.id);
@@ -57,10 +57,17 @@ ${unseen ? `<button class="ach-read" type="button">全部标为已看（${unseen
 };
 
 
-summary.addEventListener('click', e => {
-  if (!e.target.closest('.ach-read')) return;
+// "全部标为已看"：还有没看过的已解锁成就时显示，数字为剩余数量
+function syncReadButton() {
+  const left = unseenCount();
+  readButton.hidden = !left;
+  readButton.querySelector('b').textContent = left;
+  readButton.setAttribute('aria-label', `全部标为已看（${left} 个）`);
+}
+readButton.addEventListener('click', () => {
   markSeen(getUnlocked());
   render();
+  page.focus({ preventScroll: true }); // 按钮随即隐藏，焦点交还给页面
 });
 page.querySelector('.ach-filter').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -117,9 +124,7 @@ const showcase = el => {
   if (!isSeen(a.id)) {
     markSeen([a.id]);
     el.querySelector('.ach-new')?.remove();
-    const read = summary.querySelector('.ach-read');
-    const left = unseenCount();
-    if (read) left ? (read.textContent = `全部标为已看（${left}）`) : read.remove();
+    syncReadButton();
   }
   stage.innerHTML = card(a, true);
   openLayer({ el: show, hide: hideShowcase, animate: false }); // 有自己的飞入动画
