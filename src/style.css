@@ -510,11 +510,6 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 .share-link input { flex: 1; font-size: 13px; color: var(--muted); background: var(--soft); text-overflow: ellipsis; }
 .share-link .copy { flex: none; }
 .share-hint { padding: 8px 10px; border-radius: 8px; background: var(--soft); color: var(--ink) !important; }
-.share-apps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-.share-apps .btn { flex: 1; justify-content: center; }
-.share-apps .native { background: var(--ink); color: #fff; }
-.share-apps .wechat { background: #a8ffbe; }
-.share-apps .qq { background: #b8d0ff; }
 #share-dialog input:disabled, #share-dialog button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ============ 查看模式（别人的分享链接）：只读，面板变成"TA的城市制霸图"名片 ============ */
