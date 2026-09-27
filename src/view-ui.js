@@ -1,7 +1,7 @@
 // 查看模式（打开别人的分享链接 #/s/…）：面板顶部"XX的城市制霸图"、分享者的成就缩略统计、
-// 底部醒目的"创建我的城市制霸图"入口。地图、统计、导出都直接用 store 里的分享数据；
+// 底部醒目的"创建 / 查看我的城市制霸图"入口。地图、统计、导出都直接用 store 里的分享数据；
 // 修改类操作由 main.js / store.js 挡住，成就记录由 achievements-ui.js 跳过。普通模式下本模块什么都不做
-import { allLevels, viewing } from './store.js';
+import { allLevels, viewing, hasOwnData } from './store.js';
 import { evaluate, TIERS } from './achievements.js';
 import { $, esc } from './dom.js';
 
@@ -15,6 +15,9 @@ if (viewing) {
 
   // 标题
   $('#view-title b').textContent = who;
+
+  // 入口：自己已经有标记时写"查看"，否则"创建"
+  $('#view-cta .cta-text').textContent = hasOwnData() ? '查看我的城市制霸图' : '创建我的城市制霸图';
 
 
   // 成就缩略统计：解锁数（彩蛋不计入）、各稀有度数量、最高稀有度的几枚徽章（彩蛋解锁了排最前）

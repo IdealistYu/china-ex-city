@@ -29,6 +29,9 @@ export const viewing = shared && { name: shared.name, key: shared.key };
 let levels = shared ? sanitize(shared.levels) : read();
 const listeners = new Set();
 
+// 自己是否有标记（查看模式下决定入口写"创建"还是"查看"我的制霸图）
+export const hasOwnData = () => Object.keys(viewing ? read() : levels).length > 0;
+
 
 export const getLevel = code => levels[code] ?? 0;
 

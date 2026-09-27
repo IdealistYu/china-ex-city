@@ -260,17 +260,16 @@
 .ach-show[hidden] { display: none; }
 .ach-stage { width: min(280px, 72vw); perspective: 1000px; container-type: inline-size; }
 .ach-show-hint { margin: 0; color: rgba(255,255,255,.7); font-size: 13px; }
-/* 达成条件：浮在放大卡片上方的白字，字号与原先卡片里的描述相同（12 × 舞台宽 / 160）；
-   卡片落定后从下方淡入，然后轻轻上下浮动 */
+/* 达成条件：浮在放大卡片上方的白字；卡片落定后从下方淡入，之后固定不动 */
 .ach-show-desc {
-  max-width: min(340px, 86vw); margin: 0; text-align: center; line-height: 1.45;
-  font-size: min(21px, 5.4vw); font-weight: bold; color: #fff;
+  max-width: min(400px, 90vw); margin: 0; text-align: center; line-height: 1.4;
+  word-break: keep-all; overflow-wrap: anywhere; /* 只在标点处折行，不把"西北"这类词拆开 */
+  font-size: min(25px, 6.4vw); font-weight: bold; color: #fff;
   text-shadow: 0 2px 10px rgba(0,0,0,.45), 0 0 18px rgba(255,217,94,.35);
   opacity: 0; transform: translateY(10px); transition: opacity .35s ease-out, transform .35s ease-out;
 }
-.ach-show-desc.on { opacity: 1; transform: none; animation: ach-float 3.2s ease-in-out .35s infinite; }
-@keyframes ach-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@media (prefers-reduced-motion: reduce) { .ach-show-desc, .ach-show-desc.on { transition: none; animation: none; transform: none; } }
+.ach-show-desc.on { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .ach-show-desc, .ach-show-desc.on { transition: none; transform: none; } }
 
 /* 放大的卡片与列表里的卡片是同一套尺寸规则（按舞台宽度等比例放大）；
    只多了展示时一直显示的高光、传说镭射、金 / 传说光晕，以及落定时的一道闪光 */
