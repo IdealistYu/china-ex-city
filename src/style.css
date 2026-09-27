@@ -37,6 +37,8 @@
   --dim: #f5f2eb;
   --dim-line: #e7e2d7;
   /* 等级颜色 --l1…--l5 由 main.js 从 levels.js 写入，只在一处定义 */
+  /* 用户输入的文字（昵称）无法预知，网站字体子集不可能收全：一律用系统字体 */
+  --font-system: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans SC', sans-serif;
   --font: 'CityEx Sans', 'CityEx Fallback', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   --panel-w: 264px;
   --gap: 16px;
@@ -150,7 +152,7 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
 /* 顶栏控件统一 38px 高；使用说明、GitHub 与保存图片靠右成组（间距收紧为 8px） */
 #topbar .btn { height: 38px; }
 #help { margin-left: auto; }
-#help + #trophy, #trophy + #repo, #trophy + #save, #repo + #save { margin-left: -6px; }
+#help + #trophy, #trophy + #repo, #trophy + #save, #repo + #save, #save + #share { margin-left: -6px; }
 /* 有新解锁的成就：右上角红点 */
 #trophy { position: relative; }
 #trophy.has-new::after {
@@ -327,8 +329,8 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 
 /* 城市名：只在省视图显示当前省。其余用 display: none 完全不参与排版——
    370 个中文城市名若只是 visibility: hidden，首屏仍要逐个排版字形，手机上会拖出上百毫秒的长任务 */
-.labels g { display: none; }
-[data-view="province"] .labels g.active { display: inline; }
+.labels > g { display: none; } /* 只作用于各省的分组；不能写成 .labels g，否则里面的引线分组 .leaders 也会被隐藏 */
+[data-view="province"] .labels > g.active { display: inline; }
 /* 从 display: none 变为显示时没有"起始样式"，淡入动画不会触发：用 @starting-style 补上 */
 @starting-style {
   [data-view="province"] .labels .active text, [data-view="province"] .labels .active .leaders { opacity: 0; }
@@ -394,7 +396,11 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
   #help { margin-left: 0; }
   /* 收起时输入框透明铺满整个按钮，点哪里都能直接聚焦（也让触控目标足够大） */
   #topbar:not(.searching) .search input { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
-  #topbar.searching #crumb, #topbar.searching #save, #topbar.searching #help, #topbar.searching #trophy { display: none; }
+  #topbar.searching #crumb, #topbar.searching #save, #topbar.searching #help, #topbar.searching #trophy, #topbar.searching #share { display: none; }
+  /* 顶栏一排放不下五个按钮：奖杯与分享竖排在保存按钮正下方（地图会自动避让，见 main.js 的 floatRect） */
+  #trophy, #share { position: absolute; right: max(12px, env(safe-area-inset-right)); margin: 0 !important; }
+  #trophy { top: calc(100% - 8px); }
+  #share { top: calc(100% + 38px); }
   #topbar.searching .search { flex: 1; width: auto; }
   #save { flex: none; justify-content: center; width: 38px; padding: 0; }
   #save span { display: none; }
@@ -443,7 +449,7 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
     stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s;
   }
   #panel:not(.collapsed) .panel-handle svg { transform: rotate(180deg); }
-  #panel.collapsed #level-stats, #panel.collapsed .tip, #panel.collapsed .backup,
+  #panel.collapsed #level-stats, #panel.collapsed .tip, #panel.collapsed .backup, #panel.collapsed #view-ach,
   #panel.collapsed #brush, #panel.collapsed #city-list { display: none; }
   #sansha-card { width: 104px; }
 }
@@ -485,4 +491,103 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .unit.flash { animation: none; stroke: var(--accent); stroke-width: 3px; }
   .unit, .labels text, .prov-labels text, .inset { transition: none; }
+}
+
+/* ============ 分享弹窗 ============ */
+#share-dialog { width: min(440px, calc(100vw - 32px)); }
+#share-dialog .share-sum { color: var(--muted); }
+.share-name { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 12px; font-size: 14px; }
+.share-name small { margin-left: 4px; color: var(--muted); font-size: 12px; }
+.share-name input, .share-link input {
+  width: 100%; min-width: 0; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 8px;
+  font: inherit; font-size: 15px; color: var(--ink); background: #fff;
+}
+.share-name input { font-family: var(--font-system); } /* 昵称是任意输入，用系统字体 */
+.share-link { display: flex; gap: 8px; margin-bottom: 12px; }
+.share-link input { flex: 1; font-size: 13px; color: var(--muted); background: var(--soft); text-overflow: ellipsis; }
+.share-link .copy { flex: none; }
+.share-hint { padding: 8px 10px; border-radius: 8px; background: var(--soft); color: var(--ink) !important; }
+.share-apps { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.share-apps .btn { flex: 1; justify-content: center; }
+.share-apps .native { background: var(--ink); color: #fff; }
+.share-apps .wechat { background: #a8ffbe; }
+.share-apps .qq { background: #b8d0ff; }
+#share-dialog input:disabled, #share-dialog button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ============ 查看模式（别人的分享链接）：只读，面板变成"TA的城市制霸图"名片 ============ */
+[data-mode="view"] #trophy, [data-mode="view"] #share, [data-mode="view"] #brush,
+[data-mode="view"] #stats .tip, [data-mode="view"] #stats .backup { display: none !important; }
+/* 只读：城市不可点，光标与悬停都不暗示可以操作 */
+[data-mode="view"] [data-view="province"] .prov.active .unit, [data-mode="view"] #city-list button, [data-mode="view"] #sansha-card { cursor: default; }
+[data-mode="view"] #city-list button { pointer-events: none; }
+@media (hover: hover) { [data-mode="view"] [data-view="province"] .prov.active .unit:hover { filter: none; } }
+
+/* 查看模式三块：只在 data-mode="view" 时显示（index.html 头部脚本在首帧前设置，面板一开始就是最终高度） */
+html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: none; }
+#view-head { padding: 14px 14px 0; }
+.view-tag {
+  display: inline-block; padding: 1px 8px; border: 1.5px solid var(--ink); border-radius: 999px;
+  background: var(--l3); font-size: 12px; font-weight: bold; letter-spacing: .08em;
+}
+#view-title { margin: 6px 0 0; font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+#view-title b { font-family: var(--font-system); font-weight: 800; padding: 0 2px; background: linear-gradient(transparent 58%, var(--l3) 58% 92%, transparent 92%); }
+
+/* 成就缩略统计 */
+#view-ach { padding-top: 10px; border-top: 1.5px dashed var(--divider); min-height: 110px; } /* 预留成就行高度，徽章加载后不跳 */
+.va-head { display: flex; align-items: baseline; gap: 6px; font-size: 14px; }
+.va-cup { align-self: center; width: 22px; height: 22px; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px rgba(255,200,60,.7)); }
+.va-head b { font-size: 24px; line-height: 1; }
+.va-of { color: var(--muted); }
+.va-tiers { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 10px; }
+.va-tier { padding: 0 7px; border: 1.5px solid var(--ink); border-radius: 5px; font-size: 12px; font-weight: bold; }
+.va-tier[data-tier="bronze"] { background: #edb98a; }
+.va-tier[data-tier="silver"] { background: linear-gradient(135deg, #eef2f6, #c3ccd9 50%, #eef2f6); }
+.va-tier[data-tier="gold"] { background: linear-gradient(135deg, #fff0b0, #f2c13c 50%, #fff0b0); }
+.va-tier[data-tier="legend"] { background: linear-gradient(135deg, #ff7e7e, #ffb57e 25%, #ffe57e 50%, #a8ffbe 75%, #88aeff); }
+.va-badges { display: flex; align-items: center; min-height: 40px; }
+.va-badge { width: 40px; height: 40px; margin-right: -6px; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.2)); }
+.va-badge .badge { display: block; width: 100%; height: 100%; }
+.va-more {
+  margin-left: 12px; padding: 2px 8px; border: 1.5px solid var(--ink); border-radius: 999px; background: #fff;
+  font-size: 12px; font-weight: bold;
+}
+.va-none { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+
+/* 入口：创建 / 查看我的城市制霸图（醒目，带扫光） */
+#view-cta { padding: 12px 14px 14px; border-top: 1.5px dashed var(--divider); }
+#view-cta .cta {
+  position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 14px; border: 2px solid var(--ink); border-radius: 10px; background: var(--ink); color: #fff;
+  box-shadow: 3px 4px 0 var(--l3); font-size: 17px; font-weight: bold; text-decoration: none;
+  transition: transform .1s, box-shadow .1s;
+}
+#view-cta .cta svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+#view-cta .cta::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.35) 50%, transparent 65%);
+  transform: translateX(-120%); animation: cta-glint 3.2s ease-in-out infinite;
+}
+@keyframes cta-glint { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@media (hover: hover) { #view-cta .cta:hover { transform: translateY(-1px); box-shadow: 4px 6px 0 var(--l3); } }
+#view-cta .cta:active { transform: translateY(1px); box-shadow: 1px 2px 0 var(--l3); }
+#view-cta p { margin: 8px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { #view-cta .cta::after { animation: none; opacity: 0; } }
+
+/* 电脑端查看模式：全国视图的名片稍宽，放得下 5 枚徽章 */
+@media (min-width: 701px) { [data-mode="view"][data-view="country"] #panel { width: 268px; } }
+
+/* 查看模式的面板：内容比普通模式多——各块不被压缩（放不下时面板内滚动），入口始终贴在底部可见 */
+[data-mode="view"] #panel { overflow-y: auto; overscroll-behavior: contain; }
+[data-mode="view"] #panel > * { flex: none; }
+#view-cta { position: sticky; bottom: 0; background: var(--panel); }
+@media (max-width: 700px) {
+  [data-mode="view"] #panel { max-height: 56vh; max-height: 56dvh; }
+  #view-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px 0; }
+  #view-title { margin: 0; font-size: 19px; }
+  #view-ach { padding-top: 8px; min-height: 104px; }
+  .va-tiers { margin: 6px 0 8px; }
+  .va-badge { width: 34px; height: 34px; }
+  #view-cta { padding: 10px 12px 12px; }
+  #view-cta .cta { padding: 10px 12px; font-size: 16px; }
+  #view-cta p { margin-top: 6px; }
 }

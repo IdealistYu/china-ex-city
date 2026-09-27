@@ -5,7 +5,7 @@
 //   看过（seen）：点开卡片放大看过才算。没看过的已解锁成就显示 NEW；还有 NEW 时奖杯显示红点
 // 标记全部清空时两份记录一起清空，从头再来能重新体验解锁
 import { evaluate, unlockedIds } from './achievements.js';
-import { allLevels, onChange } from './store.js';
+import { allLevels, onChange, viewing } from './store.js';
 import { $ } from './dom.js';
 import { toast } from './toast.js';
 import { openLayer, closeLayer, layerOpen } from './layers.js';
@@ -34,8 +34,9 @@ const remember = ids => {
   }
   return first;
 };
-// 启动时已解锁的直接记为达成过，不补弹提示（包括从没有这份记录的旧版本升级上来）
-remember(unlocked);
+// 启动时已解锁的直接记为达成过，不补弹提示（包括从没有这份记录的旧版本升级上来）。
+// 查看模式（别人的分享链接）下数据不是自己的：不记录、不提示、不显示奖杯，下面的事件也都不注册
+if (!viewing) remember(unlocked);
 
 // 有已解锁但还没看过的成就时，按钮显示红点
 const syncBadge = () => {
@@ -76,44 +77,48 @@ const open = async (push = true) => {
   page.focus({ preventScroll: true });
 };
 
-button.addEventListener('click', () => open());
-// 预加载成就页：指针移到奖杯上、手指按下时，以及首屏之后的空闲时间（点开时不用等下载）
-button.addEventListener('pointerenter', loadPage, { once: true });
-button.addEventListener('touchstart', loadPage, { once: true, passive: true });
-const idle = window.requestIdleCallback ?? (fn => setTimeout(fn, 3000));
-addEventListener('load', () => idle(loadPage), { once: true });
-page.querySelector('.ach-back').addEventListener('click', closeLayer);
-const openFromUrl = () => { if (location.hash === ACHIEVEMENTS_HASH) open(false); };
-addEventListener('hashchange', openFromUrl);
+if (viewing) {
+  button.hidden = true;
+} else {
+  button.addEventListener('click', () => open());
+  // 预加载成就页：指针移到奖杯上、手指按下时，以及首屏之后的空闲时间（点开时不用等下载）
+  button.addEventListener('pointerenter', loadPage, { once: true });
+  button.addEventListener('touchstart', loadPage, { once: true, passive: true });
+  const idle = window.requestIdleCallback ?? (fn => setTimeout(fn, 3000));
+  addEventListener('load', () => idle(loadPage), { once: true });
+  page.querySelector('.ach-back').addEventListener('click', closeLayer);
+  const openFromUrl = () => { if (location.hash === ACHIEVEMENTS_HASH) open(false); };
+  addEventListener('hashchange', openFromUrl);
 
-// ---------- 标记城市时解锁新成就：底部提示 ----------
-onChange(code => {
-  const levels = allLevels();
-  unlocked = unlockedIds(levels);
-  if (!Object.keys(levels).length) {
-    // 标记全部清空：成就记录一起重置
-    known = new Set();
-    seen = new Set();
-    writeSet(KNOWN_KEY, known);
-    writeSet(SEEN_KEY, seen);
-  }
-  const first = remember(unlocked);
-  if (isOpen()) render(); // 成就页开着时解锁（其他标签页同步过来）：直接出现，带 NEW
+  // ---------- 标记城市时解锁新成就：底部提示 ----------
+  onChange(code => {
+    const levels = allLevels();
+    unlocked = unlockedIds(levels);
+    if (!Object.keys(levels).length) {
+      // 标记全部清空：成就记录一起重置
+      known = new Set();
+      seen = new Set();
+      writeSet(KNOWN_KEY, known);
+      writeSet(SEEN_KEY, seen);
+    }
+    const first = remember(unlocked);
+    if (isOpen()) render(); // 成就页开着时解锁（其他标签页同步过来）：直接出现，带 NEW
+    syncBadge();
+    // 只提示第一次达成的；导入备份、其他标签页同步（code 为 null）时不逐个提示
+    if (code === null || !first.length) return;
+    const names = evaluate(levels).filter(a => first.includes(a.id)).map(a => `「${a.name}」`);
+    toast(names.length === 1 ? `解锁成就${names[0]}` : `解锁 ${names.length} 个成就：${names.join('')}`, 4000);
+  });
+
+  // 多标签页：另一个标签页看过成就或记录变化，这里的红点同步
+  addEventListener('storage', e => {
+    if (e.key !== SEEN_KEY && e.key !== KNOWN_KEY && e.key !== null) return;
+    seen = readSet(SEEN_KEY);
+    known = readSet(KNOWN_KEY);
+    syncBadge();
+    if (isOpen()) render();
+  });
+
   syncBadge();
-  // 只提示第一次达成的；导入备份、其他标签页同步（code 为 null）时不逐个提示
-  if (code === null || !first.length) return;
-  const names = evaluate(levels).filter(a => first.includes(a.id)).map(a => `「${a.name}」`);
-  toast(names.length === 1 ? `解锁成就${names[0]}` : `解锁 ${names.length} 个成就：${names.join('')}`, 4000);
-});
-
-// 多标签页：另一个标签页看过成就或记录变化，这里的红点同步
-addEventListener('storage', e => {
-  if (e.key !== SEEN_KEY && e.key !== KNOWN_KEY && e.key !== null) return;
-  seen = readSet(SEEN_KEY);
-  known = readSet(KNOWN_KEY);
-  syncBadge();
-  if (isOpen()) render();
-});
-
-syncBadge();
-openFromUrl();
+  openFromUrl();
+}

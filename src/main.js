@@ -3,7 +3,8 @@
 import { inject } from '@vercel/analytics';
 import './card.css';
 import { LEVELS, levelOf, levelButtons, tally } from './levels.js';
-import { getLevel, setLevel, allLevels, onChange } from './store.js';
+import { getLevel, setLevel, allLevels, onChange, viewing } from './store.js';
+import { isShareHash } from './share.js';
 import {
   buildMap, paint, bringToFront, animateView, loadFine, setDetail, setScale, fitView, provinceView, unitsPerPixel,
   currentView, svgRect, units, unitByCode, provinceByCode, unitsOf, unitPath, buildSanshaCard, SANSHA, FULL_VIEW,
@@ -15,6 +16,8 @@ import { openPicker, closePicker, isPickerOpen, pickerContains } from './picker.
 import { setExportTarget } from './image-ui.js';
 import './backup-ui.js';
 import { ACHIEVEMENTS_HASH } from './achievements-ui.js';
+import './share-ui.js';
+import './view-ui.js';
 import { $, narrowScreen } from './dom.js';
 
 const svg = $('#map');
@@ -80,6 +83,7 @@ brushBar.addEventListener('click', e => {
 
 // 标记一个城市：画笔模式直接涂色，否则弹出等级菜单
 const mark = (code, x, y, avoid = null) => {
+  if (viewing) return; // 查看模式只读
   if (brush !== null) setLevel(code, getLevel(code) === brush ? 0 : brush);
   else openPicker(code, x, y, avoid);
 };
@@ -123,7 +127,7 @@ const layoutProvinceLabels = (code, view) => {
     bounds: { x0: left + 6, y0: top + 6, x1: width - right - 6, y1: height - bottom - 6 },
     base: LABEL_PX,
     scales: [1, 0.85],
-    avoid: card ? [{ x0: card.left - sx - 4, y0: card.top - sy - 4, x1: card.right - sx + 4, y1: card.bottom - sy + 4 }] : [],
+    avoid: [card, floatRect()].filter(Boolean).map(r => ({ x0: r.left - sx - 4, y0: r.top - sy - 4, x1: r.right - sx + 4, y1: r.bottom - sy + 4 })),
   });
   const leaders = g.querySelector('.leaders');
   leaders.replaceChildren();
@@ -197,13 +201,21 @@ const viewInsets = () => {
   return { top };
 };
 
-// 屏幕矩形 rect 在视图 view 下是否压到城市轮廓（在矩形内取样点，用实际形状判断）
-const coversMap = (view, rect) => {
+// 手机顶栏下方竖排的奖杯、分享按钮所占的屏幕矩形（它们浮在地图上，地图与城市名要避开）；不显示时为 null
+const floatRect = () => {
+  if (!narrowScreen.matches || viewing) return null;
+  const a = $('#trophy').getBoundingClientRect(), b = $('#share').getBoundingClientRect();
+  if (!a.width || !b.width) return null;
+  return { left: Math.min(a.left, b.left) - 4, top: a.top - 4, right: Math.max(a.right, b.right) + 4, bottom: b.bottom + 6 };
+};
+
+// 屏幕矩形 rect 在视图 view 下是否压到城市轮廓（在矩形内取样点，用实际形状判断）；province 只看该省的城市
+const coversMap = (view, rect, province = null) => {
   const { left, top, width } = svgRect(svg);
   const k = view[2] / width;
   const [x0, y0] = [view[0] + (rect.left - left) * k, view[1] + (rect.top - top) * k];
   const [x1, y1] = [view[0] + (rect.right - left) * k, view[1] + (rect.bottom - top) * k];
-  const candidates = units.filter(u => u.d && u.bbox[0] < x1 && u.bbox[2] > x0 && u.bbox[1] < y1 && u.bbox[3] > y0)
+  const candidates = units.filter(u => u.d && (!province || u.province === province) && u.bbox[0] < x1 && u.bbox[2] > x0 && u.bbox[1] < y1 && u.bbox[3] > y0)
     .map(u => svg.querySelector(`.prov .unit[data-code="${u.code}"]`));
   const N = 12;
   for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) {
@@ -213,11 +225,32 @@ const coversMap = (view, rect) => {
   return false;
 };
 
+// 逐步给屏幕矩形 rect 让出上方或右侧（各 0 / 25% / 50% / 75% / 100%），返回不压陆地、地图最大（视图最窄）的边距；
+// province 给定时只避让该省的城市
+const avoidInsets = (box, insets, rect, province = null) => {
+  const { top = 0, right = 0 } = insets;
+  let best = null;
+  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+    for (const extra of [{ top: top + Math.max(0, rect.bottom - top) * t }, { right: right + Math.max(0, innerWidth - rect.left - right) * t }]) {
+      const cand = { ...insets, ...extra };
+      const view = fitView(svg, box, cand);
+      if (!coversMap(view, rect, province) && (!best || view[2] < best.view[2])) best = { cand, view };
+    }
+  }
+  return best?.cand ?? { ...insets, top: Math.max(top, rect.bottom) };
+};
+const avoidRect = (box, insets, rect) => fitView(svg, box, avoidInsets(box, insets, rect));
+
 // 全国视图：统计卡片一般落在左下空白区；窗口偏窄、卡片会压到地图时，再给它让出左侧
 const countryFit = () => {
   const insets = viewInsets();
   const view = fitView(svg, FULL_VIEW, insets);
-  if (narrowScreen.matches) return view;
+  if (narrowScreen.matches) {
+    // 手机浮动按钮压到陆地时：逐步给它让出上方或右侧，取不压陆地、地图最大的一种
+    //（全国地图在手机上通常宽度受限、纵向有富余，下移往往不缩小；矮屏上让右侧更划算）
+    const f = floatRect();
+    return f ? avoidRect(FULL_VIEW, insets, f) : view;
+  }
   const card = $('#panel').getBoundingClientRect();
   return coversMap(view, card) ? fitView(svg, FULL_VIEW, { ...insets, left: card.right + 8 }) : view;
 };
@@ -225,8 +258,11 @@ const countryFit = () => {
 // 省视图；海南显示三沙卡片时，卡片在可见区域右下角。海南岛东南方是海，先按正常大小放，
 // 卡片压到陆地时再逐步给它让出右侧或下方，取不压住陆地、地图最大的一种
 const provinceFit = code => {
-  const insets = viewInsets();
+  let insets = viewInsets();
   const box = provinceView(code);
+  // 手机浮动按钮压到本省（邻省不算）时，给它让出上方或右侧
+  const f = floatRect();
+  if (f) insets = avoidInsets(box, insets, f, code);
   const plain = fitView(svg, box, insets);
   if (sanshaCard.hidden) return plain;
   const { width: cw, height: ch } = sanshaCard.getBoundingClientRect();
@@ -332,9 +368,15 @@ const showCountry = async () => {
 // hash 路由：#/440000 表示广东省视图，浏览器返回即缩回全国。
 // #/achievements 是盖在地图上的成就页（achievements-ui.js 负责），地图保持不动；
 // 从成就页等弹层返回时，目标省份与当前相同，也不重新飞行（保留用户的缩放位置）
+// 查看模式（#/s/…）下网址整体带着分享部分：省份为 #/s/…/440000，返回全国回到 #/s/…
 let routed = false;
+const HOME_HASH = viewing ? viewing.key : '';
+const provinceHash = code => `${viewing ? viewing.key : '#'}/${code}`;
 const route = () => {
-  const code = location.hash.match(/^#\/(\d{6})$/)?.[1];
+  // 在普通模式与查看模式之间切换（或换了另一条分享链接）：整页重新加载，状态最干净
+  if (isShareHash(location.hash) !== !!viewing || (viewing && !location.hash.startsWith(viewing.key))) return location.reload();
+  const rest = viewing ? location.hash.slice(viewing.key.length) : location.hash.slice(1);
+  const code = rest.match(/^\/(\d{6})$/)?.[1];
   const target = code && provinceByCode.has(code) && !provinceByCode.get(code).single ? code : null;
   if (routed && (location.hash === ACHIEVEMENTS_HASH || target === activeProvince)) return;
   routed = true;
@@ -345,7 +387,7 @@ addEventListener('hashchange', route);
 
 const goProvince = (code, focus = null) => {
   pendingFocus = focus;
-  const hash = `#/${code}`;
+  const hash = provinceHash(code);
   if (location.hash === hash) return flyTo();
   // 从全国进入时新增历史记录（返回键回到全国）；省与省之间切换则替换当前记录
   if (activeProvince) history.replaceState(history.state, '', hash);
@@ -356,7 +398,7 @@ const goProvince = (code, focus = null) => {
 // 返回全国：若是从全国进来的就退一步历史，否则直接改 hash
 const goBack = () => {
   if (history.state?.fromCountry) history.back();
-  else location.hash = '';
+  else location.hash = HOME_HASH;
 };
 
 const goCountry = (focus = null) => {
@@ -522,7 +564,8 @@ panelToggle.addEventListener('pointerup', e => {
 panelToggle.addEventListener('pointercancel', () => { dragStart = null; });
 // 键盘操作（Enter / 空格）产生的 click 没有 pointer 事件
 panelToggle.addEventListener('click', e => { if (e.detail === 0) setCollapsed(!panel.classList.contains('collapsed')); });
-try { if (localStorage.getItem(PANEL_KEY)) panel.classList.add('collapsed'); } catch { /* 忽略 */ }
+// 查看模式下面板默认展开（分享者的数据要第一眼看到），不沿用自己上次的收起状态
+try { if (!viewing && localStorage.getItem(PANEL_KEY)) panel.classList.add('collapsed'); } catch { /* 忽略 */ }
 panelToggle.setAttribute('aria-expanded', !panel.classList.contains('collapsed'));
 
 // 数据变化（code 为 null 表示整体变化：导入备份、其他标签页修改）

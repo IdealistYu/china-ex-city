@@ -57,7 +57,7 @@ const DEFS = [
   { id: 'f10', cat: 'province', tier: 'legend', name: '十省制霸', desc: '点亮十个省的全部城市', goal: 10, of: c => c.fullProvinces },
 
   // 等级
-  { id: 'l5a', cat: 'level', tier: 'bronze', name: '安家落户', desc: '有一座标记为"居住"的城市', goal: 1, of: c => c.counts[5] },
+  { id: 'l5a', cat: 'level', tier: 'bronze', name: '安家落户', desc: '有一座标记为「居住」的城市', goal: 1, of: c => c.counts[5] },
   { id: 'l5b', cat: 'level', tier: 'silver', name: '四海为家', desc: '在 3 座城市居住过', goal: 3, of: c => c.counts[5] },
   { id: 'l4', cat: 'level', tier: 'silver', name: '候鸟', desc: '在 5 座城市短居过', goal: 5, of: c => c.counts[4] },
   { id: 'l3a', cat: 'level', tier: 'silver', name: '旅行家', desc: '游玩过 30 座城市', goal: 30, of: c => c.counts[3] },

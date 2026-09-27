@@ -15,19 +15,18 @@ const readButton = page.querySelector('.ach-read');
 let filter = 'all';
 page.insertAdjacentHTML('beforeend', BADGE_DEFS); // 徽章共用的渐变，只插入一次
 
+// 卡片上只有名称与进度 / 品质，所有卡片等高；达成条件（描述）只在点开放大时浮在卡片上方显示。
 // big：展示层里放大的那张。内容与列表里的完全相同（等比例放大），只是不显示 NEW
 const card = (a, big = false) => {
   const eggLocked = a.egg && !a.done; // 彩蛋：未达成时名称、条件、进度都保密
   const pct = Math.round(a.value / a.goal * 100);
   const isNew = !big && a.done && !isSeen(a.id);
-  const desc = eggLocked ? '彩蛋成就，达成条件保密' : a.desc;
   // 已解锁的卡片可以点开展示，键盘也能操作
   const attrs = a.done && !big ? ` tabindex="0" role="button" aria-label="查看成就：${esc(a.name)}"` : '';
   return `<article class="ach-card ${a.done ? 'done' : 'locked'}${big ? ' big' : ''}" data-tier="${a.tier}" data-id="${a.id}"${attrs}>
   <div class="ach-art"><span class="ach-glyph">${badge(a, eggLocked)}</span>${isNew ? '<span class="ach-new">NEW</span>' : ''}</div>
   <div class="ach-info">
     <h3>${eggLocked ? '???' : esc(a.name)}</h3>
-    <p>${esc(desc)}</p>
   </div>
   <div class="ach-foot">
     <span class="ach-tier">${a.egg ? '彩蛋' : TIERS[a.tier]}</span>
@@ -117,6 +116,8 @@ const fromSource = () => {
   return `translate(${a.left + a.width / 2 - (b.left + b.width / 2)}px, ${a.top + a.height / 2 - (b.top + b.height / 2)}px) scale(${k})`;
 };
 
+const desc = show.querySelector('.ach-show-desc'); // 达成条件：浮在放大卡片上方
+
 const showcase = el => {
   const a = list.find(x => x.id === el.dataset.id);
   if (!a) return;
@@ -127,9 +128,11 @@ const showcase = el => {
     syncReadButton();
   }
   stage.innerHTML = card(a, true);
+  desc.textContent = a.desc;
+  desc.classList.remove('on');
   openLayer({ el: show, hide: hideShowcase, animate: false }); // 有自己的飞入动画
   const big = stage.firstElementChild;
-  if (reduceMotion.matches) return;
+  if (reduceMotion.matches) return desc.classList.add('on');
   source.style.visibility = 'hidden';
   // 飞出：从原位置旋转一圈放大到中央，落定后扫过一道闪光。飞行途中不跟随指针（否则落定瞬间会跳一下）
   big.classList.add('flying');
@@ -137,12 +140,13 @@ const showcase = el => {
     { transform: `${fromSource()} rotateY(-180deg)` },
     { transform: 'translate(0, 0) scale(1) rotateY(0)' },
   ], { duration: 650, easing: 'cubic-bezier(.2, .8, .2, 1.05)' })
-    .finished.then(() => { big.classList.remove('flying'); big.classList.add('shine'); }).catch(() => {});
+    .finished.then(() => { big.classList.remove('flying'); big.classList.add('shine'); desc.classList.add('on'); }).catch(() => {});
   show.animate([{ backgroundColor: 'transparent' }, { backgroundColor: getComputedStyle(show).backgroundColor }], { duration: 400, fill: 'backwards' });
 };
 
 const hideShowcase = async () => {
   const big = stage.firstElementChild;
+  desc.classList.remove('on');
   if (!reduceMotion.matches && source?.isConnected) {
     big.classList.remove('shine');
     const flyBack = big.animate([
