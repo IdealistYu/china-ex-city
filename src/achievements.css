@@ -18,10 +18,12 @@
   border-bottom: 1.5px dashed var(--divider);
 }
 .ach-head .btn { height: 38px; justify-self: start; }
-/* 标题："成就" + 金色奖杯，在顶栏里居中（左边是返回按钮，右边留空对称） */
-.ach-head h1 { grid-column: 2; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 24px; white-space: nowrap; }
+/* 标题：只显示金色奖杯，在顶栏里居中（左边是返回按钮，右边留空对称）；
+   "成就"二字只给读屏软件（成就页对话框以它命名） */
+.ach-head h1 { grid-column: 2; display: flex; align-items: center; margin: -6px 0; }
+.ach-title-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .ach-trophy {
-  width: 40px; height: 44px; overflow: visible;
+  width: 52px; height: 57px; overflow: visible;
   filter: drop-shadow(0 0 6px rgba(255, 200, 60, .75)) drop-shadow(1.5px 2px 0 rgba(0,0,0,.18));
 }
 /* 奖杯特效：光带每隔几秒扫过杯身（裁剪在奖杯形状内），三颗星轮流闪烁 */
@@ -32,8 +34,7 @@
 @keyframes tro-twinkle { 0%, 100% { opacity: .25; transform: scale(.6); } 50% { opacity: 1; transform: scale(1.15); } }
 @media (prefers-reduced-motion: reduce) { .tro-glint, .tro-spark { animation: none; } .tro-glint { opacity: 0; } }
 @media (max-width: 700px) {
-  .ach-head h1 { font-size: 20px; gap: 6px; }
-  .ach-trophy { width: 32px; height: 35px; }
+  .ach-trophy { width: 42px; height: 46px; }
 }
 
 .ach-main { max-width: 1040px; margin: 0 auto; padding: 20px max(var(--gap), env(safe-area-inset-right)) 48px max(var(--gap), env(safe-area-inset-left)); }
