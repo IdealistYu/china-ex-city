@@ -37,6 +37,8 @@
   --dim: #f5f2eb;
   --dim-line: #e7e2d7;
   /* 等级颜色 --l1…--l5 由 main.js 从 levels.js 写入，只在一处定义 */
+  /* 用户输入的文字（昵称）无法预知，网站字体子集不可能收全：一律用系统字体 */
+  --font-system: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', 'Noto Sans SC', sans-serif;
   --font: 'CityEx Sans', 'CityEx Fallback', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
   --panel-w: 264px;
   --gap: 16px;
@@ -500,6 +502,7 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
   width: 100%; min-width: 0; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 8px;
   font: inherit; font-size: 15px; color: var(--ink); background: #fff;
 }
+.share-name input { font-family: var(--font-system); } /* 昵称是任意输入，用系统字体 */
 .share-link { display: flex; gap: 8px; margin-bottom: 12px; }
 .share-link input { flex: 1; font-size: 13px; color: var(--muted); background: var(--soft); text-overflow: ellipsis; }
 .share-link .copy { flex: none; }
@@ -527,7 +530,7 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
   background: var(--l3); font-size: 12px; font-weight: bold; letter-spacing: .08em;
 }
 #view-title { margin: 6px 0 0; font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
-#view-title b { padding: 0 2px; background: linear-gradient(transparent 58%, var(--l3) 58% 92%, transparent 92%); }
+#view-title b { font-family: var(--font-system); font-weight: 800; padding: 0 2px; background: linear-gradient(transparent 58%, var(--l3) 58% 92%, transparent 92%); }
 
 /* 成就缩略统计 */
 #view-ach { padding-top: 10px; border-top: 1.5px dashed var(--divider); min-height: 110px; } /* 预留成就行高度，徽章加载后不跳 */
