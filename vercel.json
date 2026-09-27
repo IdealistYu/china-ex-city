@@ -4,6 +4,11 @@
   "installCommand": "npm ci",
   "buildCommand": "npx vite build",
   "outputDirectory": "dist",
+  "git": {
+    "deploymentEnabled": {
+      "dev": false
+    }
+  },
   "headers": [
     {
       "source": "/assets/(.*)",
