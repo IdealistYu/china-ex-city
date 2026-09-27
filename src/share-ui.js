@@ -42,7 +42,11 @@ const copy = async () => {
   }
 };
 
+// 昵称字体（完整版得意黑分块）的声明：打开分享弹窗时才加载，首页不受影响
+const loadNameFont = () => import('./fonts/name.css').catch(() => { /* 失败时昵称用系统字体 */ });
+
 const open = () => {
+  loadNameFont();
   const levels = allLevels();
   const t = tally(levels, units);
   const list = evaluate(levels).filter(a => !a.egg);
