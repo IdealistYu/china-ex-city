@@ -44,6 +44,7 @@ paintAll();
 // ---------- 视图状态 ----------
 let activeProvince = null; // 当前省；null 为全国视图
 let home = null;           // 当前视图的完整范围（缩放下限、复位目标）
+let autoExpanded = false;  // 手机端底部面板是否因进入省视图而自动展开（回到全国时再收起）
 let pendingFocus = null;   // 视图切换后要聚焦的城市
 
 // ---------- 侧栏：全国统计 / 本省进度、画笔、城市列表 ----------
@@ -112,7 +113,8 @@ const layoutProvinceLabels = (code, view) => {
   if (!g) return;
   const upp = unitsPerPixel(svg, view), k = 1 / upp;
   const { left = 0, top = 0, right = 0, bottom = 0 } = viewInsets();
-  const { width, height } = svgRect(svg);
+  const { left: sx, top: sy, width, height } = svgRect(svg);
+  const card = sanshaCard.hidden ? null : sanshaCard.getBoundingClientRect(); // 三沙卡片（海南）
   const { labels, missing, offscreen } = layoutLabels({
     units: unitsOf(code).filter(u => u.d),
     pathOf: unitPath,
@@ -120,6 +122,7 @@ const layoutProvinceLabels = (code, view) => {
     bounds: { x0: left + 6, y0: top + 6, x1: width - right - 6, y1: height - bottom - 6 },
     base: LABEL_PX,
     scales: [1, 0.85],
+    avoid: card ? [{ x0: card.left - sx - 4, y0: card.top - sy - 4, x1: card.right - sx + 4, y1: card.bottom - sy + 4 }] : [],
   });
   const leaders = g.querySelector('.leaders');
   leaders.replaceChildren();
@@ -217,7 +220,28 @@ const countryFit = () => {
   const card = $('#panel').getBoundingClientRect();
   return coversMap(view, card) ? fitView(svg, FULL_VIEW, { ...insets, left: card.right + 8 }) : view;
 };
-const provinceFit = code => fitView(svg, provinceView(code), viewInsets());
+
+// 省视图；海南显示三沙卡片时，卡片在可见区域右下角。海南岛东南方是海，先按正常大小放，
+// 卡片压到陆地时再逐步给它让出右侧或下方，取不压住陆地、地图最大的一种
+const provinceFit = code => {
+  const insets = viewInsets();
+  const box = provinceView(code);
+  const plain = fitView(svg, box, insets);
+  if (sanshaCard.hidden) return plain;
+  const { width: cw, height: ch } = sanshaCard.getBoundingClientRect();
+  const { right = 0, bottom = 0 } = insets;
+  const x1 = innerWidth - right - 16, y1 = innerHeight - bottom - 16;
+  const card = { left: x1 - cw, top: y1 - ch, right: x1, bottom: y1 };
+  let best = null;
+  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+    for (const extra of [{ right: right + (cw + 16) * t }, { bottom: bottom + (ch + 16) * t }]) {
+      const view = fitView(svg, box, { ...insets, ...extra });
+      if ((!best || view[2] < best[2]) && !coversMap(view, card)) best = view; // 视图越窄，地图越大
+    }
+    if (best) return best;
+  }
+  return best ?? plain;
+};
 
 // 聚焦某个城市的视图：留出边距，但不超过最大缩放
 const focusView = code => {
@@ -270,10 +294,15 @@ const enterProvince = async code => {
   $('#province-name').textContent = p.name;
   $('#stats').hidden = true;
   $('#province').hidden = false;
+  // 手机端进入省视图时展开底部面板，画笔和城市列表直接可用（随后按展开后的面板计算视图）
+  if (narrowScreen.matches && panel.classList.contains('collapsed')) {
+    applyCollapsed(false);
+    autoExpanded = true;
+  }
   sanshaCard.hidden = !unitsOf(code).some(u => u.code === SANSHA);
-  placeSanshaCard();
   renderCityList(code);
   renderStats();
+  placeSanshaCard(); // 城市列表渲染后面板才是最终高度
   syncTitles();
   setExportTarget(code);
   home = provinceFit(code);
@@ -290,6 +319,8 @@ const showCountry = async () => {
   $('#stats').hidden = false;
   $('#province').hidden = true;
   sanshaCard.hidden = true;
+  if (autoExpanded) applyCollapsed(true);
+  autoExpanded = false;
   for (const g of svg.querySelectorAll('.active')) g.classList.remove('active');
   syncTitles();
   setExportTarget(null);
@@ -356,11 +387,11 @@ const locator = createLocator({
 });
 
 // ---------- 三沙卡片 ----------
-// 放在地图可见区域的左下角（窄屏时在底部面板上方），不遮挡海南岛
+// 放在地图可见区域的右下角（海南岛东南方是海，空间大；窄屏时在底部面板上方）
 const placeSanshaCard = () => {
   if (sanshaCard.hidden) return;
-  const { left = 0, bottom = 0 } = viewInsets();
-  sanshaCard.style.left = `${left + 16}px`;
+  const { right = 0, bottom = 0 } = viewInsets();
+  sanshaCard.style.right = `${right + 16}px`;
   sanshaCard.style.bottom = `${bottom + 16}px`;
 };
 sanshaCard.addEventListener('click', e => {
@@ -433,9 +464,9 @@ const refit = (animate = false) => {
     Math.min(Math.max(cy - h / 2, home[1]), home[1] + home[3] - h),
     w, h,
   ];
+  placeSanshaCard(); // 先放好三沙卡片，城市名布局要避开它
   if (activeProvince) layoutProvinceLabels(activeProvince, home);
   syncLabels(view);
-  placeSanshaCard();
   if (animate) return animateView(svg, view, 300, syncScale);
   svg.setAttribute('viewBox', view.join(' '));
   syncScale(view);
@@ -457,11 +488,15 @@ addEventListener('resize', () => {
 const panel = $('#panel');
 const panelToggle = $('#panel-toggle');
 const PANEL_KEY = 'china-ex-city:panel-collapsed';
-const setCollapsed = (collapsed, animate = true) => {
+const applyCollapsed = collapsed => {
   panel.classList.toggle('collapsed', collapsed);
   panelToggle.setAttribute('aria-expanded', !collapsed);
   panelToggle.setAttribute('aria-label', collapsed ? '展开面板' : '收起面板');
   try { localStorage.setItem(PANEL_KEY, collapsed ? '1' : ''); } catch { /* 忽略 */ }
+};
+const setCollapsed = (collapsed, animate = true) => {
+  autoExpanded = false; // 用户自己操作过，回到全国时不再替他收起
+  applyCollapsed(collapsed);
   if (narrowScreen.matches) refit(animate);
 };
 let dragStart = null;

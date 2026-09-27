@@ -408,11 +408,16 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
   #locator { left: 8px !important; right: 8px; width: auto; max-height: 72vh; }
 
   /* 底部面板：顶部把手，点击或上下拖动收起 / 展开；收起后只保留一行摘要 */
+  /* 把手是扁平的箭头：收起时朝上（点击展开），展开时朝下（点击收起）；整行都可点 */
   .panel-handle {
     display: flex; justify-content: center; align-items: center; flex: none;
-    height: 22px; margin-bottom: -8px; border: 0; background: none; touch-action: none; cursor: grab;
+    height: 34px; margin: -4px 0 -10px; border: 0; background: none; touch-action: none; cursor: grab;
   }
-  .panel-handle span { width: 40px; height: 5px; border-radius: 3px; background: var(--divider); }
+  .panel-handle svg {
+    width: 44px; height: 12px; fill: none; stroke: var(--muted);
+    stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .25s;
+  }
+  #panel:not(.collapsed) .panel-handle svg { transform: rotate(180deg); }
   #panel.collapsed #level-stats, #panel.collapsed .tip, #panel.collapsed .backup,
   #panel.collapsed #brush, #panel.collapsed #city-list { display: none; }
   #sansha-card { width: 104px; }

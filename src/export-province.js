@@ -76,14 +76,13 @@ const buildSvg = (code, levels, fine) => {
   const labelSvg = leaders + labels.map(({ u, x, y, s }) => `<text x="${MAP.x + x}" y="${MAP.y + y}" font-size="${s}" text-anchor="middle" dominant-baseline="central"
   stroke="rgba(255,255,255,.85)" stroke-width="${s * 0.22}" stroke-linejoin="round" paint-order="stroke">${esc(u.short)}</text>`).join('');
 
-  // 竖版全国位置小图：国界轮廓 + 九段线，当前省涂黑；小省份加红圈
+  // 竖版全国位置小图：国界轮廓 + 九段线，当前省涂黑
   const mini = `
 <g id="mini">
   <svg id="mini-svg" height="${MINI_H}" viewBox="0 0 1000 1300" overflow="visible">
     <path d="${mapData.outline}" fill="#fff" stroke="${INK}" stroke-width="10" stroke-linejoin="round"/>
     ${units.map(u => `<path d="${u.d}" fill="${INK}" stroke="${INK}" stroke-width="4"/>`).join('')}
     <path d="${mapData.jd}" fill="${INK}" stroke="${INK}" stroke-width="14" stroke-linecap="round"/>
-    ${Math.max(bw, bh) < 90 ? `<circle cx="${(bx0 + bx1) / 2}" cy="${(by0 + by1) / 2}" r="${Math.max(bw, bh) / 2 + 34}" fill="none" stroke="#e0402a" stroke-width="14"/>` : ''}
   </svg>
 </g>`;
 
@@ -108,15 +107,18 @@ const buildSvg = (code, levels, fine) => {
     const BW = 190, BH = BW * ih / iw;
     const X = MAP.x + MAP.w - BW - 24, Y = MAP.y + MAP.h - BH - 24;
     const c = colorOf[levels[SANSHA] ?? 0];
+    // 地图按圆角裁剪，边框最后画：否则左上角的陆地会盖住边框内侧一半，看起来粗细不一
     sansha = `
 <g transform="translate(${X} ${Y})">
-  <rect width="${BW}" height="${BH}" rx="14" fill="${PAPER}" stroke="${INK}" stroke-width="3"/>
-  <svg width="${BW}" height="${BH}" viewBox="${ix} ${iy} ${iw} ${ih}">
+  <clipPath id="sansha-clip"><rect width="${BW}" height="${BH}" rx="14"/></clipPath>
+  <rect width="${BW}" height="${BH}" rx="14" fill="${PAPER}"/>
+  <g clip-path="url(#sansha-clip)"><svg width="${BW}" height="${BH}" viewBox="${ix} ${iy} ${iw} ${ih}">
     ${mapData.inset.units.map(u => (u.code === SANSHA
     ? `<path d="${u.d}" fill="${c}" stroke="${INK}" stroke-width="1.2"/>`
     : `<path d="${u.d}" fill="#f5f2eb" stroke="#e7e2d7" stroke-width="0.4"/>`)).join('')}
     <path d="${mapData.inset.jd}" fill="${INK}" stroke="${INK}" stroke-width="0.6"/>
-  </svg>
+  </svg></g>
+  <rect width="${BW}" height="${BH}" rx="14" fill="none" stroke="${INK}" stroke-width="3"/>
   <rect x="${BW / 2 - 36}" y="${BH * 0.52}" width="72" height="34" rx="8" fill="${c}" stroke="${INK}" stroke-width="2.5"/>
   <text x="${BW / 2}" y="${BH * 0.52 + 17}" font-size="24" text-anchor="middle" dominant-baseline="central">三沙</text>
   <text x="${BW - 10}" y="${BH - 10}" font-size="16" text-anchor="end" fill="${MUTED}">南海诸岛</text>

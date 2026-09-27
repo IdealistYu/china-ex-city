@@ -20,11 +20,12 @@ export const labelBox = (x, y, text, s) => {
  * @param bounds  { x0, y0, x1, y1 }：文字可以放置的像素范围
  * @param base    基准字号（像素）
  * @param scales  逐级缩小的比例，最后一级也用于引线文字
+ * @param avoid   文字不能压住的区域（像素矩形 { x0, y0, x1, y1 }，如地图上的浮动卡片）
  * @returns { labels: [{ u, x, y, s, leader?: [ax, ay] }], missing: [城市简称], offscreen: [城市] }
  *   标注点在 bounds 之外的城市（放大后移出屏幕）不参与布局，列入 offscreen
  */
-export const layoutLabels = ({ units, pathOf, view: { vx, vy, k }, bounds, base, scales = [1, 0.82, 0.7] }) => {
-  const placed = [], labels = [], missing = [];
+export const layoutLabels = ({ units, pathOf, view: { vx, vy, k }, bounds, base, scales = [1, 0.82, 0.7], avoid = [] }) => {
+  const placed = [...avoid], labels = [], missing = [];
   const inBounds = b => b.x0 > bounds.x0 && b.x1 < bounds.x1 && b.y0 > bounds.y0 && b.y1 < bounds.y1;
   const area = u => (u.bbox[2] - u.bbox[0]) * (u.bbox[3] - u.bbox[1]);
   const all = units.map(u => ({ u, x: (u.label[0] - vx) * k, y: (u.label[1] - vy) * k }));
