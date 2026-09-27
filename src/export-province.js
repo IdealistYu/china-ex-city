@@ -2,13 +2,12 @@
 import { LEVELS, tally } from './levels.js';
 import { units as allUnits, provinceByCode, unitsOf, loadFine } from './map.js';
 import mapData from './map-data.json';
-import { rasterize } from './export.js';
+import { rasterize, FONT } from './export.js';
 import { esc } from './dom.js';
 import { layoutLabels, leaderEnd } from './label-layout.js';
 
 const W = 1080, H = 1440, PAD = 64, SCALE = 2;
 const INK = '#222', MUTED = '#6b665c', BG = '#f3efe6', PAPER = '#fbf9f4';
-const FONT = `'CityEx Sans','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif`;
 const SANSHA = '460300';
 const MAP = { x: PAD, y: 330, w: W - PAD * 2, h: 900 };
 const STAMP = { w: 84, h: 200 };
