@@ -92,8 +92,10 @@
     .shots figcaption strong { color: var(--ink); }
     @media (max-width: 520px) { .shots { grid-template-columns: 1fr; gap: 24px; } .shots figure:last-child img { width: 78%; } }
     /* 文中提到的按钮：跟在文字后面的小图标，与网站上的按钮同款（只作提示，不可点击） */
-    .ico { display: inline-flex; align-items: center; justify-content: center; width: 1.5em; height: 1.5em; margin: 0 .25em; vertical-align: -.35em; border: 1.5px solid var(--ink); border-radius: 5px; background: #fff; box-shadow: 1.5px 2px 0 rgba(0,0,0,.12); }
-    .ico svg { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    /* inline-block + 块级 svg：盒子的基线就是底边，下移 .35em 后图标中心约在基线上方 .4em，与汉字上下居中
+       （若用 inline-flex，基线取自内部 svg，图标会整体偏下、顶边贴着文字上沿） */
+    .ico { display: inline-block; width: 1.5em; height: 1.5em; margin: 0 .25em; vertical-align: -.35em; border: 1.5px solid var(--ink); border-radius: 5px; background: #fff; box-shadow: 1.5px 2px 0 rgba(0,0,0,.12); }
+    .ico svg { display: block; margin: calc(.25em - 1.5px) auto 0; width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
     .ico.dark { background: var(--ink); color: #fff; }
     footer { margin-top: 48px; padding-top: 16px; border-top: 1.5px dashed var(--line); color: var(--muted); font-size: 14px; }
     footer a, main a { color: var(--ink); }
