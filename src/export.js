@@ -9,8 +9,8 @@ const SCALE = 2;
 const FONT = `'CityEx Sans','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif`;
 
 export const BG = '#f3efe6';
-// 外框：图片整体做成一张卡片（深色描边、圆角、硬投影），外面留一圈比卡片深一档的底色，像相框
-const FRAME = { outer: '#e2dacb', ink: '#222', shadow: 'rgba(0,0,0,.16)', margin: 22, radius: 22, border: 4, dx: 5, dy: 7 };
+// 外框：图片整体做成一张卡片（深色描边、圆角、硬投影），外面留一圈近白的底色，放在浅色界面里几乎看不出来
+const FRAME = { outer: '#fdfcf9', ink: '#222', shadow: 'rgba(0,0,0,.13)', margin: 22, radius: 22, border: 4, dx: 5, dy: 7 };
 
 const STYLE = `
 .sea{fill:${BG}}
