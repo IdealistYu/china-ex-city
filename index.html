@@ -2,6 +2,8 @@
 <html lang="zh-Hans" data-view="country">
 <head>
   <meta charset="UTF-8">
+  <!-- 打开别人的分享链接（#/s/…）时，在首次绘制前就切到查看模式的样式，避免先显示普通界面再跳变 -->
+  <script>if (location.hash.startsWith('#/s/')) document.documentElement.dataset.mode = 'view';</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>城市制霸 - 标记你去过的中国城市，生成城市足迹地图</title>
   <meta name="description" content="标记你去过的每一座中国城市，按居住、短居、游玩、出差、路过给城市上色，生成你的城市足迹地图">
@@ -19,7 +21,7 @@
     "operatingSystem": "Any",
     "inLanguage": "zh-CN",
     "image": "https://china.loveyou.moe/og.jpg",
-    "featureList": ["全国与省两级地图标记 370 座城市", "五个等级上色并自动计分", "导出全国足迹图与单省制霸图", "33 个收集成就", "数据只存本机，支持 JSON 备份"],
+    "featureList": ["全国与省两级地图标记 370 座城市", "五个等级上色并自动计分", "导出全国足迹图与单省制霸图", "33 个收集成就", "链接分享足迹地图", "数据只存本机，支持 JSON 备份"],
     "isAccessibleForFree": true,
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" }
   }
@@ -72,6 +74,9 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19h14"/></svg>
       <span>保存全国图</span>
     </button>
+    <button id="share" class="btn icon-btn" type="button" aria-label="分享我的制霸图" title="分享我的制霸图">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7l4-3.5L16 7"/><path d="M8.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5h-2"/></svg>
+    </button>
   </header>
 
   <div id="locator" hidden>
@@ -92,12 +97,19 @@
   <aside id="panel">
     <!-- 手机端：点击或上下拖动收起 / 展开面板 -->
     <button id="panel-toggle" class="panel-handle" type="button" aria-expanded="true" aria-controls="panel" aria-label="收起面板"><svg viewBox="0 0 44 12" aria-hidden="true"><path d="M3 10 22 2.5 41 10"/></svg></button>
+    <!-- 查看模式（别人的分享链接）：标题。以下三块只在 data-mode="view" 时由样式显示（首帧即是最终高度，不跳动） -->
+    <div id="view-head">
+      <span class="view-tag">足迹分享</span>
+      <h2 id="view-title"><b></b>的城市制霸图</h2>
+    </div>
     <section id="stats">
       <div class="score-line">
         <div class="score"><b id="score-num">0</b><span>分</span></div>
         <div id="visited"></div>
       </div>
       <ul id="level-stats"></ul>
+      <!-- 查看模式：分享者的成就缩略统计 -->
+      <div id="view-ach"></div>
       <p class="tip">点击省份进入，给去过的城市标记等级</p>
       <div class="backup">
         <span>数据只保存在本浏览器</span>
@@ -119,6 +131,11 @@
       </div>
       <div id="city-list"></div>
     </section>
+    <!-- 查看模式：创建 / 查看自己的制霸图（面板收起时也保留） -->
+    <div id="view-cta">
+      <a class="cta" href="./"><span class="cta-text">创建我的城市制霸图</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a>
+      <p>免费 · 无需注册 · 标记你去过的每一座城市</p>
+    </div>
   </aside>
 
   <div id="picker" role="dialog" aria-labelledby="picker-title" hidden>
@@ -131,6 +148,23 @@
     <p>手机端可长按图片保存</p>
     <button class="btn">关闭</button>
   </div>
+
+  <!-- 分享：链接里带着全部标记（可选昵称），对方打开即是查看模式 -->
+  <dialog id="share-dialog" aria-labelledby="share-title">
+    <form method="dialog">
+      <h2 id="share-title">分享我的城市制霸图</h2>
+      <p class="share-sum"></p>
+      <label class="share-name"><span>昵称<small>（可选，最多 12 个字）</small></span><input type="text" maxlength="12" placeholder="例如：小明" autocomplete="nickname" enterkeyhint="done"></label>
+      <div class="share-link"><input type="text" readonly aria-label="分享链接"><button type="button" class="btn copy">复制链接</button></div>
+      <p class="share-hint" hidden></p>
+      <div class="share-apps" hidden>
+        <button type="button" class="btn native"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v11M8 7l4-3.5L16 7"/><path d="M8.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12a1.5 1.5 0 0 0-1.5-1.5h-2"/></svg>分享给朋友</button>
+        <button type="button" class="btn wechat">复制并打开微信</button>
+        <button type="button" class="btn qq">复制并打开 QQ</button>
+      </div>
+      <div class="actions"><button value="close" class="btn">关闭</button></div>
+    </form>
+  </dialog>
 
   <!-- 导入：本机已有数据时选择合并或替换 -->
   <dialog id="import-dialog" aria-labelledby="import-title">
