@@ -14,6 +14,7 @@ import { createLocator } from './locator.js';
 import { openPicker, closePicker, isPickerOpen, pickerContains } from './picker.js';
 import { isOutputOpen, closeOutput, setExportTarget } from './image-ui.js';
 import './backup-ui.js';
+import './achievements-ui.js';
 import { $, narrowScreen } from './dom.js';
 
 const svg = $('#map');
