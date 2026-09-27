@@ -13,8 +13,9 @@ if (viewing) {
   document.documentElement.dataset.mode = 'view';
   document.title = `${who}的城市制霸图 - 城市制霸`;
 
-  // 标题
+  // 标题。昵称用完整版得意黑分块（只下载昵称用到的字所在的块）
   $('#view-title b').textContent = who;
+  if (viewing.name) import('./fonts/name.css').catch(() => { /* 失败时昵称用系统字体 */ });
 
   // 入口：自己已经有标记时写"查看"，否则"创建"
   $('#view-cta .cta-text').textContent = hasOwnData() ? '查看我的城市制霸图' : '创建我的城市制霸图';

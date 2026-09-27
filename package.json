@@ -1,6 +1,6 @@
 {
   "name": "china-ex-city",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
   "description": "中国城市制霸：省→市两级缩放的城市足迹标记工具",
@@ -8,7 +8,7 @@
   "scripts": {
     "fetch": "node scripts/fetch-data.mjs",
     "map": "node scripts/build-map.mjs",
-    "font": "node scripts/build-font.mjs",
+    "font": "node scripts/build-font.mjs && node scripts/build-name-font.mjs",
     "data": "npm run fetch && npm run map && npm run font && npm run check",
     "check": "node scripts/check.mjs",
     "test": "node tests/e2e.mjs",
