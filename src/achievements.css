@@ -103,17 +103,15 @@
   background: var(--art);
 }
 
-/* 徽章：白底圆牌 + 卡面文字，字越多字号越小 */
+/* 徽章：每个成就一枚圆形奖章（badges.js 生成的 SVG），带整体投影 */
 .ach-glyph {
-  position: relative; z-index: 2;
-  display: flex; align-items: center; justify-content: center; width: calc(var(--k) * 66); height: calc(var(--k) * 66);
-  border: calc(var(--k) * 2.5) solid var(--ink); border-radius: 50%; background: #fff;
-  box-shadow: calc(var(--k) * 2) calc(var(--k) * 3) 0 rgba(0,0,0,.18);
-  font-size: calc(var(--k) * 32); font-weight: bold; line-height: 1;
+  position: relative; z-index: 2; display: block; width: calc(var(--k) * 100); height: calc(var(--k) * 100);
+  filter: drop-shadow(calc(var(--k) * 2) calc(var(--k) * 3) 0 rgba(0,0,0,.2));
 }
-.ach-glyph[data-len="2"] { font-size: calc(var(--k) * 26); }
-.ach-glyph[data-len="3"] { font-size: calc(var(--k) * 22); }
-.ach-glyph[data-len="4"] { font-size: calc(var(--k) * 18); }
+.badge { display: block; width: 100%; height: 100%; overflow: visible; }
+.badge text { font-family: inherit; }
+/* 图案的投影：同一组图形错位一点，统一涂成半透明深色 */
+.bdg-sh * { fill: rgba(0,0,0,.22) !important; stroke: rgba(0,0,0,.22) !important; }
 
 .ach-new {
   position: absolute; top: calc(var(--k) * 7); right: calc(var(--k) * 7); z-index: 3; padding: calc(var(--k) * 1) calc(var(--k) * 6);
@@ -176,18 +174,6 @@
   animation: ach-flow 4s linear infinite;
 }
 @keyframes ach-flow { to { background-position: 300% 0; } }
-
-/* 徽章圆环 */
-.ach-card.done[data-tier="silver"] .ach-glyph { box-shadow: calc(var(--k) * 2) calc(var(--k) * 3) 0 rgba(0,0,0,.18), inset 0 0 0 calc(var(--k) * 4) #dde3ea; }
-.ach-card.done[data-tier="gold"] .ach-glyph {
-  box-shadow: calc(var(--k) * 2) calc(var(--k) * 3) 0 rgba(0,0,0,.18),
-    inset 0 0 0 calc(var(--k) * 3) #eab63a, inset 0 0 0 calc(var(--k) * 5) #fff, inset 0 0 0 calc(var(--k) * 7) #f5d06a;
-}
-.ach-card.done[data-tier="legend"] .ach-glyph {
-  border: calc(var(--k) * 4) solid transparent;
-  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, #ff7e7e, #ffe57e, #a8ffbe, #88aeff, #d7a8ff) border-box;
-  box-shadow: 0 0 0 calc(var(--k) * 2) var(--ink), calc(var(--k) * 2) calc(var(--k) * 3) 0 calc(var(--k) * 2) rgba(0,0,0,.18);
-}
 
 /* 传说卡面：彩虹缓慢流动 */
 .ach-card.done[data-tier="legend"] .ach-art { background-size: 300% 300%; animation: ach-holo 8s ease-in-out infinite alternate; }

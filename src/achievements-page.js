@@ -5,6 +5,7 @@ import { allLevels } from './store.js';
 import { $, esc } from './dom.js';
 import { openLayer, closeLayer } from './layers.js';
 import { isSeen, markSeen, unseenCount, getUnlocked } from './achievements-ui.js';
+import { badge, BADGE_DEFS } from './badges.js';
 import './achievements.css';
 
 const page = $('#achievements');
@@ -12,18 +13,18 @@ const grid = page.querySelector('.ach-body');
 const summary = page.querySelector('.ach-summary');
 const readButton = page.querySelector('.ach-read');
 let filter = 'all';
+page.insertAdjacentHTML('beforeend', BADGE_DEFS); // 徽章共用的渐变，只插入一次
 
 // big：展示层里放大的那张。内容与列表里的完全相同（等比例放大），只是不显示 NEW
 const card = (a, big = false) => {
   const eggLocked = a.egg && !a.done; // 彩蛋：未达成时名称、条件、进度都保密
   const pct = Math.round(a.value / a.goal * 100);
   const isNew = !big && a.done && !isSeen(a.id);
-  const glyph = eggLocked ? '?' : a.glyph;
   const desc = eggLocked ? '彩蛋成就，达成条件保密' : a.desc;
   // 已解锁的卡片可以点开展示，键盘也能操作
   const attrs = a.done && !big ? ` tabindex="0" role="button" aria-label="查看成就：${esc(a.name)}"` : '';
   return `<article class="ach-card ${a.done ? 'done' : 'locked'}${big ? ' big' : ''}" data-tier="${a.tier}" data-id="${a.id}"${attrs}>
-  <div class="ach-art"><span class="ach-glyph" data-len="${[...glyph].length}">${esc(glyph)}</span>${isNew ? '<span class="ach-new">NEW</span>' : ''}</div>
+  <div class="ach-art"><span class="ach-glyph">${badge(a, eggLocked)}</span>${isNew ? '<span class="ach-new">NEW</span>' : ''}</div>
   <div class="ach-info">
     <h3>${eggLocked ? '???' : esc(a.name)}</h3>
     <p>${esc(desc)}</p>

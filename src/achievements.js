@@ -39,49 +39,49 @@ const provincesLit = codes => ctx => codes.filter(p => ctx.litProvinces.has(p)).
 
 const DEFS = [
   // 足迹：去过的城市数
-  { id: 'c1', cat: 'count', tier: 'bronze', glyph: '1', name: '迈出第一步', desc: '点亮第一座城市', goal: 1, of: c => c.visited },
-  { id: 'c10', cat: 'count', tier: 'bronze', glyph: '10', name: '小有足迹', desc: '去过 10 座城市', goal: 10, of: c => c.visited },
-  { id: 'c30', cat: 'count', tier: 'silver', glyph: '30', name: '走南闯北', desc: '去过 30 座城市', goal: 30, of: c => c.visited },
-  { id: 'c50', cat: 'count', tier: 'silver', glyph: '50', name: '见多识广', desc: '去过 50 座城市', goal: 50, of: c => c.visited },
-  { id: 'c100', cat: 'count', tier: 'gold', glyph: '100', name: '百城之旅', desc: '去过 100 座城市', goal: 100, of: c => c.visited },
-  { id: 'c200', cat: 'count', tier: 'gold', glyph: '200', name: '行万里路', desc: '去过 200 座城市', goal: 200, of: c => c.visited },
-  { id: 'c300', cat: 'count', tier: 'gold', glyph: '300', name: '城市收藏家', desc: '去过 300 座城市', goal: 300, of: c => c.visited },
-  { id: 'c370', cat: 'count', tier: 'legend', glyph: '370', name: '全国制霸', desc: '去过全部 370 座城市', goal: 370, of: c => c.visited },
+  { id: 'c1', cat: 'count', tier: 'bronze', name: '迈出第一步', desc: '点亮第一座城市', goal: 1, of: c => c.visited },
+  { id: 'c10', cat: 'count', tier: 'bronze', name: '小有足迹', desc: '去过 10 座城市', goal: 10, of: c => c.visited },
+  { id: 'c30', cat: 'count', tier: 'silver', name: '走南闯北', desc: '去过 30 座城市', goal: 30, of: c => c.visited },
+  { id: 'c50', cat: 'count', tier: 'silver', name: '见多识广', desc: '去过 50 座城市', goal: 50, of: c => c.visited },
+  { id: 'c100', cat: 'count', tier: 'gold', name: '百城之旅', desc: '去过 100 座城市', goal: 100, of: c => c.visited },
+  { id: 'c200', cat: 'count', tier: 'gold', name: '行万里路', desc: '去过 200 座城市', goal: 200, of: c => c.visited },
+  { id: 'c300', cat: 'count', tier: 'gold', name: '城市收藏家', desc: '去过 300 座城市', goal: 300, of: c => c.visited },
+  { id: 'c370', cat: 'count', tier: 'legend', name: '全国制霸', desc: '去过全部 370 座城市', goal: 370, of: c => c.visited },
 
   // 省份
-  { id: 'p10', cat: 'province', tier: 'bronze', glyph: '省', name: '跨省旅行', desc: '在 10 个省级行政区留下足迹', goal: 10, of: c => c.litProvinces.size },
-  { id: 'p20', cat: 'province', tier: 'silver', glyph: '省', name: '半壁江山', desc: '在 20 个省级行政区留下足迹', goal: 20, of: c => c.litProvinces.size },
-  { id: 'p34', cat: 'province', tier: 'gold', glyph: '34', name: '神州漫游', desc: '在全部 34 个省级行政区留下足迹', goal: 34, of: c => c.litProvinces.size },
-  { id: 'f1', cat: 'province', tier: 'silver', glyph: '霸', name: '一省制霸', desc: '点亮一个省的全部城市', goal: 1, of: c => c.fullProvinces },
-  { id: 'f5', cat: 'province', tier: 'gold', glyph: '霸', name: '五省制霸', desc: '点亮五个省的全部城市', goal: 5, of: c => c.fullProvinces },
-  { id: 'f10', cat: 'province', tier: 'legend', glyph: '霸', name: '十省制霸', desc: '点亮十个省的全部城市', goal: 10, of: c => c.fullProvinces },
+  { id: 'p10', cat: 'province', tier: 'bronze', name: '跨省旅行', desc: '在 10 个省级行政区留下足迹', goal: 10, of: c => c.litProvinces.size },
+  { id: 'p20', cat: 'province', tier: 'silver', name: '半壁江山', desc: '在 20 个省级行政区留下足迹', goal: 20, of: c => c.litProvinces.size },
+  { id: 'p34', cat: 'province', tier: 'gold', name: '神州漫游', desc: '在全部 34 个省级行政区留下足迹', goal: 34, of: c => c.litProvinces.size },
+  { id: 'f1', cat: 'province', tier: 'silver', name: '一省制霸', desc: '点亮一个省的全部城市', goal: 1, of: c => c.fullProvinces },
+  { id: 'f5', cat: 'province', tier: 'gold', name: '五省制霸', desc: '点亮五个省的全部城市', goal: 5, of: c => c.fullProvinces },
+  { id: 'f10', cat: 'province', tier: 'legend', name: '十省制霸', desc: '点亮十个省的全部城市', goal: 10, of: c => c.fullProvinces },
 
   // 等级
-  { id: 'l5a', cat: 'level', tier: 'bronze', glyph: '居', name: '安家落户', desc: '有一座标记为"居住"的城市', goal: 1, of: c => c.counts[5] },
-  { id: 'l5b', cat: 'level', tier: 'silver', glyph: '居', name: '四海为家', desc: '在 3 座城市居住过', goal: 3, of: c => c.counts[5] },
-  { id: 'l4', cat: 'level', tier: 'silver', glyph: '短', name: '候鸟', desc: '在 5 座城市短居过', goal: 5, of: c => c.counts[4] },
-  { id: 'l3a', cat: 'level', tier: 'silver', glyph: '游', name: '旅行家', desc: '游玩过 30 座城市', goal: 30, of: c => c.counts[3] },
-  { id: 'l3b', cat: 'level', tier: 'gold', glyph: '游', name: '职业游客', desc: '游玩过 100 座城市', goal: 100, of: c => c.counts[3] },
-  { id: 'l2', cat: 'level', tier: 'silver', glyph: '差', name: '空中飞人', desc: '出差去过 20 座城市', goal: 20, of: c => c.counts[2] },
-  { id: 'l1', cat: 'level', tier: 'silver', glyph: '过', name: '匆匆过客', desc: '路过 30 座城市', goal: 30, of: c => c.counts[1] },
+  { id: 'l5a', cat: 'level', tier: 'bronze', name: '安家落户', desc: '有一座标记为"居住"的城市', goal: 1, of: c => c.counts[5] },
+  { id: 'l5b', cat: 'level', tier: 'silver', name: '四海为家', desc: '在 3 座城市居住过', goal: 3, of: c => c.counts[5] },
+  { id: 'l4', cat: 'level', tier: 'silver', name: '候鸟', desc: '在 5 座城市短居过', goal: 5, of: c => c.counts[4] },
+  { id: 'l3a', cat: 'level', tier: 'silver', name: '旅行家', desc: '游玩过 30 座城市', goal: 30, of: c => c.counts[3] },
+  { id: 'l3b', cat: 'level', tier: 'gold', name: '职业游客', desc: '游玩过 100 座城市', goal: 100, of: c => c.counts[3] },
+  { id: 'l2', cat: 'level', tier: 'silver', name: '空中飞人', desc: '出差去过 20 座城市', goal: 20, of: c => c.counts[2] },
+  { id: 'l1', cat: 'level', tier: 'silver', name: '匆匆过客', desc: '路过 30 座城市', goal: 30, of: c => c.counts[1] },
 
   // 地理
-  { id: 'g-muni', cat: 'geo', tier: 'silver', glyph: '京', name: '直辖市巡礼', desc: '去过北京、天津、上海、重庆', goal: 4, of: count(MUNICIPALITIES) },
-  { id: 'g-hmt', cat: 'geo', tier: 'gold', glyph: '港', name: '港澳台之旅', desc: '去过香港、澳门、台湾', goal: 3, of: count(HMT) },
-  { id: 'g-cap10', cat: 'geo', tier: 'bronze', glyph: '会', name: '省会打卡', desc: '去过 10 个省会城市', goal: 10, of: count(CAPITALS) },
-  { id: 'g-cap', cat: 'geo', tier: 'gold', glyph: '会', name: '省会全收集', desc: '去过全部 27 个省会城市', goal: 27, of: count(CAPITALS) },
-  { id: 'g-ext', cat: 'geo', tier: 'gold', glyph: '极', name: '东西南北', desc: '去过四极所在的城市：佳木斯、克孜勒苏、三沙、大兴安岭', goal: 4, of: count(EXTREMES) },
-  { id: 'g-region', cat: 'geo', tier: 'silver', glyph: '区', name: '大区巡游', desc: '华北、东北、华东、中南、西南、西北、港澳台各去过至少一座城市', goal: REGIONS.length,
+  { id: 'g-muni', cat: 'geo', tier: 'silver', name: '直辖市巡礼', desc: '去过北京、天津、上海、重庆', goal: 4, of: count(MUNICIPALITIES) },
+  { id: 'g-hmt', cat: 'geo', tier: 'gold', name: '港澳台之旅', desc: '去过香港、澳门、台湾', goal: 3, of: count(HMT) },
+  { id: 'g-cap10', cat: 'geo', tier: 'bronze', name: '省会打卡', desc: '去过 10 个省会城市', goal: 10, of: count(CAPITALS) },
+  { id: 'g-cap', cat: 'geo', tier: 'gold', name: '省会全收集', desc: '去过全部 27 个省会城市', goal: 27, of: count(CAPITALS) },
+  { id: 'g-ext', cat: 'geo', tier: 'gold', name: '东西南北', desc: '去过四极所在的城市：佳木斯、克孜勒苏、三沙、大兴安岭', goal: 4, of: count(EXTREMES) },
+  { id: 'g-region', cat: 'geo', tier: 'silver', name: '大区巡游', desc: '华北、东北、华东、中南、西南、西北、港澳台各去过至少一座城市', goal: REGIONS.length,
     of: c => REGIONS.filter(r => [...c.litProvinces].some(p => r.includes(p[0]))).length },
-  { id: 'g-nw', cat: 'geo', tier: 'silver', glyph: '丝', name: '丝绸之路', desc: '西北五省区（陕、甘、宁、青、新）都留下足迹', goal: 5, of: provincesLit(NORTHWEST) },
-  { id: 'g-ne', cat: 'geo', tier: 'bronze', glyph: '关', name: '闯关东', desc: '东北三省（辽、吉、黑）都留下足迹', goal: 3, of: provincesLit(NORTHEAST) },
-  { id: 'g-jn', cat: 'geo', tier: 'silver', glyph: '江南', name: '烟雨江南', desc: '去过上海、南京、苏州、无锡、常州、杭州、宁波、嘉兴、湖州、绍兴', goal: 10, of: count(JIANGNAN) },
+  { id: 'g-nw', cat: 'geo', tier: 'silver', name: '丝绸之路', desc: '西北五省区（陕、甘、宁、青、新）都留下足迹', goal: 5, of: provincesLit(NORTHWEST) },
+  { id: 'g-ne', cat: 'geo', tier: 'bronze', name: '闯关东', desc: '东北三省（辽、吉、黑）都留下足迹', goal: 3, of: provincesLit(NORTHEAST) },
+  { id: 'g-jn', cat: 'geo', tier: 'silver', name: '烟雨江南', desc: '去过上海、南京、苏州、无锡、常州、杭州、宁波、嘉兴、湖州、绍兴', goal: 10, of: count(JIANGNAN) },
 
   // 分数
-  { id: 's100', cat: 'score', tier: 'bronze', glyph: '100', name: '百分选手', desc: '总分达到 100 分', goal: 100, of: c => c.score },
-  { id: 's500', cat: 'score', tier: 'silver', glyph: '500', name: '高分玩家', desc: '总分达到 500 分', goal: 500, of: c => c.score },
-  { id: 's1000', cat: 'score', tier: 'gold', glyph: '1000', name: '千分大师', desc: '总分达到 1000 分', goal: 1000, of: c => c.score },
-  { id: 's1850', cat: 'score', tier: 'legend', glyph: '1850', name: '彭祖再世', desc: '恭喜您活到了370岁！', goal: 1850, of: c => c.score, egg: true }, // 与等级类成就互斥（全部居住时其他等级为 0），只作彩蛋
+  { id: 's100', cat: 'score', tier: 'bronze', name: '百分选手', desc: '总分达到 100 分', goal: 100, of: c => c.score },
+  { id: 's500', cat: 'score', tier: 'silver', name: '高分玩家', desc: '总分达到 500 分', goal: 500, of: c => c.score },
+  { id: 's1000', cat: 'score', tier: 'gold', name: '千分大师', desc: '总分达到 1000 分', goal: 1000, of: c => c.score },
+  { id: 's1850', cat: 'score', tier: 'legend', name: '彭祖再世', desc: '恭喜您活到了370岁！', goal: 1850, of: c => c.score, egg: true }, // 与等级类成就互斥（全部居住时其他等级为 0），只作彩蛋
 ];
 
 // 推算所需的汇总数据
