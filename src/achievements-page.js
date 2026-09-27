@@ -5,26 +5,27 @@ import { allLevels } from './store.js';
 import { $, esc } from './dom.js';
 import { openLayer, closeLayer } from './layers.js';
 import { isSeen, markSeen, unseenCount, getUnlocked } from './achievements-ui.js';
+import { badge, BADGE_DEFS } from './badges.js';
 import './achievements.css';
 
 const page = $('#achievements');
 const grid = page.querySelector('.ach-body');
 const summary = page.querySelector('.ach-summary');
+const readButton = page.querySelector('.ach-read');
 let filter = 'all';
+page.insertAdjacentHTML('beforeend', BADGE_DEFS); // 徽章共用的渐变，只插入一次
 
-// big：展示层里放大的那张（多一行类别，不显示 NEW）
+// big：展示层里放大的那张。内容与列表里的完全相同（等比例放大），只是不显示 NEW
 const card = (a, big = false) => {
   const eggLocked = a.egg && !a.done; // 彩蛋：未达成时名称、条件、进度都保密
   const pct = Math.round(a.value / a.goal * 100);
   const isNew = !big && a.done && !isSeen(a.id);
-  const glyph = eggLocked ? '?' : a.glyph;
   const desc = eggLocked ? '彩蛋成就，达成条件保密' : a.desc;
   // 已解锁的卡片可以点开展示，键盘也能操作
   const attrs = a.done && !big ? ` tabindex="0" role="button" aria-label="查看成就：${esc(a.name)}"` : '';
   return `<article class="ach-card ${a.done ? 'done' : 'locked'}${big ? ' big' : ''}" data-tier="${a.tier}" data-id="${a.id}"${attrs}>
-  <div class="ach-art"><span class="ach-glyph" data-len="${[...glyph].length}">${esc(glyph)}</span>${isNew ? '<span class="ach-new">NEW</span>' : ''}</div>
+  <div class="ach-art"><span class="ach-glyph">${badge(a, eggLocked)}</span>${isNew ? '<span class="ach-new">NEW</span>' : ''}</div>
   <div class="ach-info">
-    ${big ? `<div class="ach-kind">${esc(CATEGORIES.find(c => c.id === a.cat).name)}成就 · ${a.egg ? '彩蛋' : TIERS[a.tier]}</div>` : ''}
     <h3>${eggLocked ? '???' : esc(a.name)}</h3>
     <p>${esc(desc)}</p>
   </div>
@@ -41,10 +42,9 @@ export const render = () => {
   // 彩蛋不计入进度
   const counted = list.filter(a => !a.egg);
   const done = counted.filter(a => a.done).length;
-  const unseen = unseenCount();
   summary.innerHTML = `<div class="ach-total"><b>${done}</b> / ${counted.length}</div>
-<div class="ach-bar"><i style="width:${done / counted.length * 100}%"></i></div>
-${unseen ? `<button class="ach-read" type="button">全部标为已看（${unseen}）</button>` : ''}`;
+<div class="ach-bar"><i style="width:${done / counted.length * 100}%"></i></div>`;
+  syncReadButton();
   const shown = list.filter(a => filter === 'all' || (filter === 'done' ? a.done : !a.done));
   grid.innerHTML = CATEGORIES.map(c => {
     const items = shown.filter(a => a.cat === c.id);
@@ -57,10 +57,17 @@ ${unseen ? `<button class="ach-read" type="button">全部标为已看（${unseen
 };
 
 
-summary.addEventListener('click', e => {
-  if (!e.target.closest('.ach-read')) return;
+// "全部标为已看"：还有没看过的已解锁成就时显示，数字为剩余数量
+function syncReadButton() {
+  const left = unseenCount();
+  readButton.hidden = !left;
+  readButton.querySelector('b').textContent = left;
+  readButton.setAttribute('aria-label', `全部标为已看（${left} 个）`);
+}
+readButton.addEventListener('click', () => {
   markSeen(getUnlocked());
   render();
+  page.focus({ preventScroll: true }); // 按钮随即隐藏，焦点交还给页面
 });
 page.querySelector('.ach-filter').addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -117,9 +124,7 @@ const showcase = el => {
   if (!isSeen(a.id)) {
     markSeen([a.id]);
     el.querySelector('.ach-new')?.remove();
-    const read = summary.querySelector('.ach-read');
-    const left = unseenCount();
-    if (read) left ? (read.textContent = `全部标为已看（${left}）`) : read.remove();
+    syncReadButton();
   }
   stage.innerHTML = card(a, true);
   openLayer({ el: show, hide: hideShowcase, animate: false }); // 有自己的飞入动画

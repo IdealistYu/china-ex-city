@@ -325,9 +325,14 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 .jd { fill: var(--ink); stroke: var(--ink); stroke-width: 1.6px; stroke-linecap: round; }
 [data-view="province"] .inset { opacity: 0; }
 
-/* 城市名：只在省视图显示当前省；非当前省不参与绘制 */
-.labels g { visibility: hidden; }
-[data-view="province"] .labels g.active { visibility: visible; }
+/* 城市名：只在省视图显示当前省。其余用 display: none 完全不参与排版——
+   370 个中文城市名若只是 visibility: hidden，首屏仍要逐个排版字形，手机上会拖出上百毫秒的长任务 */
+.labels g { display: none; }
+[data-view="province"] .labels g.active { display: inline; }
+/* 从 display: none 变为显示时没有"起始样式"，淡入动画不会触发：用 @starting-style 补上 */
+@starting-style {
+  [data-view="province"] .labels .active text, [data-view="province"] .labels .active .leaders { opacity: 0; }
+}
 /* 引线：放不下名字的小城市，从城市点连到名字 */
 .labels line { stroke: var(--ink); stroke-width: 1.2px; vector-effect: non-scaling-stroke; }
 .labels circle { fill: #fff; stroke: var(--ink); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
