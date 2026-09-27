@@ -9,6 +9,8 @@ const SCALE = 2;
 const FONT = `'CityEx Sans','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif`;
 
 export const BG = '#f3efe6';
+// 外框：图片整体做成一张卡片（深色描边、圆角、硬投影），外面留一圈比卡片深一档的底色，像相框
+const FRAME = { outer: '#e2dacb', ink: '#222', shadow: 'rgba(0,0,0,.16)', margin: 22, radius: 22, border: 4, dx: 5, dy: 7 };
 
 const STYLE = `
 .sea{fill:${BG}}
@@ -69,11 +71,11 @@ const extractText = svgText => {
   }
 };
 
-const drawText = (ctx, ops, scale) => {
+const drawText = (ctx, ops, scale, ox = 0, oy = 0) => {
   const color = c => (c && c !== 'none' ? c : '#222');
   for (const o of ops) {
     const [a, b, c, d, e, f] = o.m;
-    ctx.setTransform(a * scale, b * scale, c * scale, d * scale, e * scale, f * scale);
+    ctx.setTransform(a * scale, b * scale, c * scale, d * scale, e * scale + ox, f * scale + oy);
     ctx.textBaseline = o.central ? 'middle' : 'alphabetic';
     ctx.textAlign = 'left';
     const font = r => `${r.weight} ${r.size}px ${r.family}`;
@@ -92,8 +94,19 @@ const drawText = (ctx, ops, scale) => {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 };
 
-// 把 SVG 文本栅格化为 PNG，返回 blob URL；能下载时顺便触发下载
-export const rasterize = async (text, W, H, scale, filename) => {
+const roundRect = (ctx, x, y, w, h, r) => {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+};
+
+// 把 SVG 文本栅格化为 PNG，返回 blob URL；能下载时顺便触发下载。
+// padding：卡片内侧留白（SVG 单位）。图片总尺寸保持 W×H，内容按比例缩小放进卡片
+export const rasterize = async (text, W, H, scale, filename, { padding = 0 } = {}) => {
   const { svg, ops, chars } = extractText(text);
   await document.fonts.load(`16px 'CityEx Sans'`, chars); // 确保页面字体已就绪
   const img = new Image();
@@ -105,13 +118,32 @@ export const rasterize = async (text, W, H, scale, filename) => {
   });
 
   const canvas = document.createElement('canvas');
-  canvas.width = W * scale;
-  canvas.height = H * scale;
+  const cw = canvas.width = W * scale;
+  const ch = canvas.height = H * scale;
   const ctx = canvas.getContext('2d');
+  const [m, r, dx, dy, pad] = [FRAME.margin, FRAME.radius, FRAME.dx, FRAME.dy, padding].map(v => v * scale);
+  // 卡片：扣掉外圈留白和投影偏移；内容等比缩放后居中
+  const bw = cw - m * 2 - dx, bh = ch - m * 2 - dy;
+  const k = Math.min((bw - pad * 2) / cw, (bh - pad * 2) / ch);
+  const ox = m + (bw - cw * k) / 2, oy = m + (bh - ch * k) / 2;
+
+  ctx.fillStyle = FRAME.outer;
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.fillStyle = FRAME.shadow;
+  roundRect(ctx, m + dx, m + dy, bw, bh, r);
+  ctx.fill();
+  ctx.save();
+  roundRect(ctx, m, m, bw, bh, r);
+  ctx.clip();
   ctx.fillStyle = BG;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  drawText(ctx, ops, scale);
+  ctx.fillRect(m, m, bw, bh);
+  ctx.drawImage(img, ox, oy, cw * k, ch * k);
+  drawText(ctx, ops, scale * k, ox, oy);
+  ctx.restore();
+  ctx.lineWidth = FRAME.border * scale;
+  ctx.strokeStyle = FRAME.ink;
+  roundRect(ctx, m, m, bw, bh, r);
+  ctx.stroke();
   URL.revokeObjectURL(svgUrl);
 
   const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -143,5 +175,5 @@ export const exportImage = async levels => {
   const text = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${FULL_VIEW.join(' ')}" width="${W}" height="${H}" style="--k:${1 / SCALE}">`
     + `<style>${STYLE}${CARD_STYLE}</style>${svg.innerHTML}${overlay}</svg>`;
 
-  return rasterize(text, W, H, SCALE, '城市制霸.png');
+  return rasterize(text, W, H, SCALE, '城市制霸.png', { padding: 16 }); // 地图铺得很满，和边框之间留点空
 };

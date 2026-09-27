@@ -139,7 +139,6 @@ const buildSvg = (code, levels, fine) => {
   <rect width="${W}" height="${H}" fill="${BG}"/>
   ${header}
   ${mini}
-  <rect x="${MAP.x + 6}" y="${MAP.y + 9}" width="${MAP.w}" height="${MAP.h}" rx="26" fill="rgba(0,0,0,.12)"/>
   <clipPath id="card"><rect x="${MAP.x}" y="${MAP.y}" width="${MAP.w}" height="${MAP.h}" rx="26"/></clipPath>
   <rect x="${MAP.x}" y="${MAP.y}" width="${MAP.w}" height="${MAP.h}" rx="26" fill="${PAPER}"/>
   <g clip-path="url(#card)">${mapSvg}${labelSvg}</g>
