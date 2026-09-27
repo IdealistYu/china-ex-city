@@ -4,8 +4,11 @@
   --legend: linear-gradient(135deg, #ff7e7e, #ffb57e 25%, #ffe57e 50%, #a8ffbe 75%, #88aeff);
   position: fixed; inset: 0; z-index: 40; overflow-y: auto; overscroll-behavior: contain;
   background: var(--bg);
+  scrollbar-width: none; /* 隐藏滚动条，仍可用滚轮、触控板、键盘滚动 */
 }
+#achievements::-webkit-scrollbar { display: none; }
 #achievements[hidden] { display: none; }
+#achievements:focus { outline: none; }
 
 .ach-head {
   position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 12px;
@@ -20,7 +23,7 @@
 .ach-main { max-width: 1040px; margin: 0 auto; padding: 20px max(var(--gap), env(safe-area-inset-right)) 48px max(var(--gap), env(safe-area-inset-left)); }
 
 /* 总进度 */
-.ach-summary { display: flex; align-items: center; gap: 16px; }
+.ach-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .ach-total { flex: none; font-size: 18px; color: var(--muted); }
 .ach-total b { font-size: 40px; color: var(--ink); }
 .ach-bar, .ach-progress {
@@ -28,6 +31,10 @@
 }
 .ach-bar i, .ach-progress i { display: block; height: 100%; background: var(--l3); }
 .ach-bar i { background: var(--legend); }
+.ach-read {
+  flex: none; padding: 3px 10px; border: 1.5px solid var(--ink); border-radius: 6px; background: #fff;
+  font: inherit; font-size: 13px; color: var(--ink); cursor: pointer;
+}
 
 /* 筛选 */
 .ach-filter { display: inline-flex; margin: 18px 0 4px; border: 2px solid var(--ink); border-radius: 8px; overflow: hidden; background: #fff; }
@@ -41,6 +48,9 @@
 .ach-empty { margin: 48px 0; text-align: center; color: var(--muted); }
 
 .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 18px; }
+/* 卡槽：不随卡片上抬、倾斜而移动，悬停判断以它为准，指针停在卡片边缘时不会来回抖动 */
+.ach-slot { display: flex; }
+.ach-slot > .ach-card { flex: 1; }
 
 /* ---------- 卡牌 ---------- */
 .ach-card {
@@ -54,39 +64,27 @@
 .ach-card.done { cursor: pointer; }
 /* 表面高光：跟随指针的柔光 */
 .ach-card::after {
-  content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
+  content: ''; position: absolute; inset: 0; z-index: 4; pointer-events: none; border-radius: inherit;
   background: radial-gradient(circle at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,.55), rgba(255,255,255,0) 55%);
   opacity: 0; transition: opacity .3s; mix-blend-mode: soft-light;
 }
-/* 传说卡：卡面图上再叠一层随指针移动的镭射光泽（不盖住文字） */
-.ach-card.done[data-tier="legend"] .ach-art::before {
-  content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; border-radius: inherit;
-  background: linear-gradient(115deg, transparent 20%, rgba(255,126,126,.35) 35%, rgba(255,229,126,.35) 45%, rgba(168,255,190,.35) 55%, rgba(136,174,255,.35) 65%, transparent 80%);
-  background-size: 250% 250%; background-position: var(--mx, 50%) var(--my, 50%);
-  mix-blend-mode: color-dodge; opacity: 0; transition: opacity .3s;
-}
 @media (hover: hover) {
-  .ach-card:hover { --lift: -4px; transition: transform .12s ease-out, box-shadow .35s; }
-  .ach-card.done:hover { --lift: -8px; box-shadow: 6px 12px 0 rgba(0,0,0,.16); }
-  .ach-card.locked:hover { box-shadow: 2px 4px 0 var(--shadow); }
-  .ach-card.done:hover::after, .ach-card.done:hover .ach-art::before { opacity: 1; }
+  .ach-slot:hover > .ach-card { --lift: -4px; transition: transform .12s ease-out, box-shadow .35s; }
+  .ach-slot:hover > .ach-card.done { --lift: -8px; box-shadow: 6px 12px 0 rgba(0,0,0,.16); }
+  .ach-slot:hover > .ach-card.locked { box-shadow: 2px 4px 0 var(--shadow); }
+  .ach-slot:hover > .ach-card.done::after { opacity: 1; }
 }
 .ach-card.done:focus-visible { --lift: -8px; }
+
 .ach-art {
-  position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3;
+  position: relative; display: flex; align-items: center; justify-content: center; aspect-ratio: 4 / 3; overflow: hidden;
   border-bottom: 2px solid var(--ink);
-  background:
-    radial-gradient(circle at 20% 25%, rgba(255,255,255,.55) 0 8%, transparent 9%),
-    radial-gradient(circle at 82% 78%, rgba(255,255,255,.4) 0 12%, transparent 13%),
-    var(--tier);
+  background: var(--art);
 }
-.ach-card[data-tier="bronze"] { --tier: var(--bronze); }
-.ach-card[data-tier="silver"] { --tier: var(--silver); }
-.ach-card[data-tier="gold"] { --tier: var(--gold); }
-.ach-card[data-tier="legend"] { --tier: var(--legend); }
 
 /* 徽章：白底圆牌 + 卡面文字，字越多字号越小 */
 .ach-glyph {
+  position: relative; z-index: 2;
   display: flex; align-items: center; justify-content: center; width: 72px; height: 72px;
   border: 2.5px solid var(--ink); border-radius: 50%; background: #fff;
   box-shadow: 2px 3px 0 rgba(0,0,0,.18);
@@ -97,7 +95,7 @@
 .ach-glyph[data-len="4"] { font-size: 19px; }
 
 .ach-new {
-  position: absolute; top: 8px; right: 8px; padding: 1px 7px;
+  position: absolute; top: 8px; right: 8px; z-index: 3; padding: 1px 7px;
   border: 2px solid var(--ink); border-radius: 6px; background: var(--l5);
   font-size: 12px; font-weight: bold;
 }
@@ -112,15 +110,105 @@
 .ach-progress { height: 10px; border-width: 1.5px; }
 .ach-count { flex: none; color: var(--muted); font-variant-numeric: tabular-nums; }
 
+/* ---------- 稀有度：一级比一级多一种效果 ----------
+ * 铜：哑光纯色
+ * 银：拉丝金属 + 银环徽章 + 内框银线 + 间隔闪光
+ * 金：金属金 + 星点闪烁 + 双环徽章 + 内框双线 + 更频繁的闪光 + 悬停金色光晕
+ * 传说：流动彩虹镭射 + 常亮镭射光泽 + 彩虹环徽章 + 流动彩虹边框 + 悬停彩虹光晕
+ */
+.ach-card[data-tier="bronze"] {
+  --tier: var(--bronze);
+  --art:
+    radial-gradient(circle at 20% 25%, rgba(255,255,255,.5) 0 8%, transparent 9%),
+    radial-gradient(circle at 82% 78%, rgba(255,255,255,.35) 0 12%, transparent 13%),
+    var(--bronze);
+}
+.ach-card[data-tier="silver"] {
+  --tier: linear-gradient(135deg, #eef2f6, #c3ccd9 50%, #eef2f6);
+  --art:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.22) 0 1px, transparent 1px 3px),
+    linear-gradient(135deg, #eef2f6 0%, #c3ccd9 30%, #f8fafc 48%, #b5bfcd 70%, #e4e9ef 100%);
+}
+.ach-card[data-tier="gold"] {
+  --tier: linear-gradient(135deg, #fff0b0, #f2c13c 50%, #fff0b0);
+  --art: linear-gradient(135deg, #fff0b0 0%, #f6c945 28%, #fff6d4 48%, #e8ae2c 72%, #ffe07a 100%);
+}
+.ach-card[data-tier="legend"] {
+  --tier: var(--legend);
+  --art: linear-gradient(135deg, #ff7e7e, #ffb57e, #ffe57e, #a8ffbe, #88aeff, #d7a8ff, #ff7e7e);
+}
+
+/* 内框：银单线、金双线、传说彩虹流动（只有已解锁的卡片才有） */
+.ach-card.done:is([data-tier="silver"], [data-tier="gold"], [data-tier="legend"])::before {
+  content: ''; position: absolute; inset: 4px; z-index: 3; pointer-events: none; border-radius: 8px;
+  border: 2px solid #b9c3d1;
+}
+.ach-card.done[data-tier="gold"]::before { border-color: #e2a92a; box-shadow: inset 0 0 0 2px #fff4c8, inset 0 0 0 3.5px #efc453; }
+.ach-card.done[data-tier="legend"]::before {
+  border: 3px solid transparent;
+  background: linear-gradient(90deg, #ff7e7e, #ffe57e, #a8ffbe, #88aeff, #d7a8ff, #ff7e7e) border-box;
+  background-size: 300% 100%;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: ach-flow 4s linear infinite;
+}
+@keyframes ach-flow { to { background-position: 300% 0; } }
+
+/* 徽章圆环 */
+.ach-card.done[data-tier="silver"] .ach-glyph { box-shadow: 2px 3px 0 rgba(0,0,0,.18), inset 0 0 0 4px #dde3ea; }
+.ach-card.done[data-tier="gold"] .ach-glyph { box-shadow: 2px 3px 0 rgba(0,0,0,.18), inset 0 0 0 3px #eab63a, inset 0 0 0 5px #fff, inset 0 0 0 7px #f5d06a; }
+.ach-card.done[data-tier="legend"] .ach-glyph {
+  border: 4px solid transparent;
+  background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, #ff7e7e, #ffe57e, #a8ffbe, #88aeff, #d7a8ff) border-box;
+  box-shadow: 0 0 0 2px var(--ink), 2px 3px 0 2px rgba(0,0,0,.18);
+}
+
+/* 传说卡面：彩虹缓慢流动 */
+.ach-card.done[data-tier="legend"] .ach-art { background-size: 300% 300%; animation: ach-holo 8s ease-in-out infinite alternate; }
+@keyframes ach-holo { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
+
+/* 金卡星点 / 传说镭射光泽：放在卡面图的 ::before 上 */
+.ach-card.done[data-tier="gold"] .ach-art::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 22%, #fff 0 1.6px, transparent 2.6px),
+    radial-gradient(circle at 80% 18%, #fff 0 1.2px, transparent 2.2px),
+    radial-gradient(circle at 86% 70%, #fff 0 1.8px, transparent 2.8px),
+    radial-gradient(circle at 26% 80%, #fff 0 1.2px, transparent 2.2px),
+    radial-gradient(circle at 62% 12%, #fff 0 1px, transparent 2px);
+  animation: ach-twinkle 2.4s ease-in-out infinite alternate;
+}
+@keyframes ach-twinkle { from { opacity: .25; } to { opacity: 1; } }
+.ach-card.done[data-tier="legend"] .ach-art::before {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,.55) 38%, rgba(255,255,255,0) 50%, rgba(255,255,255,.4) 62%, transparent 80%);
+  background-size: 250% 250%; background-position: var(--mx, 50%) var(--my, 50%);
+  mix-blend-mode: overlay; opacity: .7; transition: opacity .3s;
+}
+
+/* 间隔闪光：银慢、金快、传说最快 */
+.ach-card.done:is([data-tier="silver"], [data-tier="gold"], [data-tier="legend"]) .ach-art::after {
+  content: ''; position: absolute; inset: -20%; z-index: 1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255,255,255,.8) 50%, transparent 58%);
+  transform: translateX(-130%); animation: ach-glint 7s ease-in-out infinite;
+}
+.ach-card.done[data-tier="gold"] .ach-art::after { animation-duration: 4.5s; }
+.ach-card.done[data-tier="legend"] .ach-art::after { animation-duration: 3.5s; }
+@keyframes ach-glint { 0%, 70% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+
+/* 悬停光晕 */
+@media (hover: hover) {
+  .ach-slot:hover > .ach-card.done[data-tier="gold"] { box-shadow: 6px 12px 0 rgba(0,0,0,.16), 0 0 26px 2px rgba(255,196,50,.6); }
+  .ach-slot:hover > .ach-card.done[data-tier="legend"] { box-shadow: 6px 12px 0 rgba(0,0,0,.16), -8px 0 28px rgba(136,174,255,.55), 8px 0 28px rgba(255,126,126,.55); }
+  .ach-slot:hover > .ach-card.done[data-tier="legend"] .ach-art::before { opacity: 1; }
+}
+
 /* 未解锁：卡面褪色，像还没收集到的卡牌 */
 .ach-card.locked { background: #faf8f3; box-shadow: none; border-color: color-mix(in srgb, var(--ink) 45%, transparent); }
 .ach-card.locked .ach-art { filter: grayscale(1) opacity(.45); border-bottom-color: color-mix(in srgb, var(--ink) 45%, transparent); }
 .ach-card.locked .ach-info h3 { color: var(--muted); }
 .ach-card.locked .ach-tier { background: none; border-color: var(--muted); color: var(--muted); }
-
-/* 已解锁的传说成就：卡面缓慢流光 */
-.ach-card.done[data-tier="legend"] .ach-art { background-size: 100%, 100%, 200% 200%; animation: ach-shine 6s ease-in-out infinite alternate; }
-@keyframes ach-shine { to { background-position: 0 0, 0 0, 100% 100%; } }
+.ach-card.locked .ach-state { color: var(--muted); font-weight: normal; }
 
 /* 未解锁的卡片被点击：轻轻晃一下 */
 .ach-card.nope { animation: ach-nope .4s; }
@@ -134,7 +222,7 @@
 /* ---------- 展示层：点开已解锁的卡片 ---------- */
 .ach-show {
   position: fixed; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
-  padding: 24px; background: rgba(20, 18, 14, .72); backdrop-filter: blur(3px); cursor: zoom-out;
+  padding: 24px; background: var(--scrim); backdrop-filter: blur(3px); cursor: zoom-out;
   touch-action: none;
 }
 .ach-show[hidden] { display: none; }
@@ -148,6 +236,9 @@
 }
 .ach-card.big::after { opacity: 1; }
 .ach-card.big[data-tier="legend"] .ach-art::before { opacity: 1; }
+.ach-card.big[data-tier="gold"] { box-shadow: 8px 14px 0 rgba(0,0,0,.35), 0 0 48px 6px rgba(255,196,50,.55); }
+.ach-card.big[data-tier="legend"] { box-shadow: 8px 14px 0 rgba(0,0,0,.35), -14px 0 50px rgba(136,174,255,.6), 14px 0 50px rgba(255,126,126,.6); }
+.ach-card.big.done::before { inset: 6px; border-radius: 12px; }
 .ach-card.big .ach-art { aspect-ratio: 4 / 3.4; border-bottom-width: 3px; }
 .ach-card.big .ach-glyph { width: 118px; height: 118px; border-width: 3.5px; font-size: 58px; box-shadow: 3px 5px 0 rgba(0,0,0,.2); }
 .ach-card.big .ach-glyph[data-len="2"] { font-size: 46px; }
@@ -163,15 +254,14 @@
 
 /* 飞到中央后扫过一道闪光 */
 .ach-card.big.shine .ach-art::after {
-  content: ''; position: absolute; inset: -20%;
+  content: ''; position: absolute; inset: -20%; z-index: 1;
   background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.85) 50%, transparent 60%);
   transform: translateX(-100%); animation: ach-sweep .9s ease-out forwards;
 }
 @keyframes ach-sweep { to { transform: translateX(100%); } }
-.ach-card.big .ach-art { overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
-  .ach-card .ach-art, .ach-card.nope, .ach-card.big.shine .ach-art::after { animation: none !important; }
+  .ach-card .ach-art, .ach-card .ach-art::before, .ach-card .ach-art::after, .ach-card::before, .ach-card.nope { animation: none !important; }
   .ach-card { transition: none; }
 }
 

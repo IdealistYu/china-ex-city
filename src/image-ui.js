@@ -4,6 +4,7 @@ import { exportImage } from './export.js';
 import { exportProvinceImage } from './export-province.js';
 import { provinceByCode } from './map.js';
 import { $ } from './dom.js';
+import { openLayer, closeLayer } from './layers.js';
 
 const output = $('#output');
 const saveButton = $('#save');
@@ -20,12 +21,6 @@ export const setExportTarget = code => {
   saveButton.title = label;
 };
 
-export const isOutputOpen = () => !output.hidden;
-
-export const closeOutput = () => {
-  output.hidden = true;
-  saveButton.focus();
-};
 
 saveButton.addEventListener('click', async () => {
   if (saveButton.disabled) return; // 生成中，防止重复点击
@@ -36,7 +31,7 @@ saveButton.addEventListener('click', async () => {
     if (outputUrl) URL.revokeObjectURL(outputUrl); // 释放上一次导出的图片
     outputUrl = url;
     output.querySelector('img').src = url;
-    output.hidden = false;
+    openLayer({ el: output, hide: () => { output.hidden = true; } }); // 返回键、Esc 也能关闭，关闭后焦点回到保存按钮
     closeButton.focus();
   } catch (err) {
     console.error(err);
@@ -47,5 +42,5 @@ saveButton.addEventListener('click', async () => {
   }
 });
 
-closeButton.addEventListener('click', closeOutput);
-output.addEventListener('click', e => { if (e.target === output) closeOutput(); }); // 点背景关闭
+closeButton.addEventListener('click', closeLayer);
+output.addEventListener('click', e => { if (e.target === output) closeLayer(); }); // 点背景关闭
