@@ -509,6 +509,10 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 .share-link { display: flex; gap: 8px; margin-bottom: 12px; }
 .share-link input { flex: 1; font-size: 13px; color: var(--muted); background: var(--soft); text-overflow: ellipsis; }
 .share-link .copy { flex: none; }
+.share-apps { display: flex; gap: 8px; margin-bottom: 12px; }
+.share-apps .btn { flex: 1; justify-content: center; padding-left: 6px; padding-right: 6px; }
+.share-apps .wechat { background: #a8ffbe; }
+.share-apps .qq { background: #b8d0ff; }
 .share-hint { padding: 8px 10px; border-radius: 8px; background: var(--soft); color: var(--ink) !important; }
 #share-dialog input:disabled, #share-dialog button:disabled { opacity: .45; cursor: not-allowed; }
 

@@ -158,7 +158,12 @@
       <p class="share-sum"></p>
       <label class="share-name"><span>昵称<small>（可选，最多 12 个字）</small></span><input type="text" maxlength="12" placeholder="例如：小明" autocomplete="nickname" enterkeyhint="done"></label>
       <div class="share-link"><input type="text" readonly aria-label="分享链接"><button type="button" class="btn copy">复制链接</button></div>
-      <p class="share-hint">提示：点击复制链接，分享给好友吧</p>
+      <!-- 手机上：复制链接后直接打开微信 / QQ，由用户粘贴发送（网页无法直接发给好友） -->
+      <div class="share-apps" hidden>
+        <button type="button" class="btn wechat">复制链接并打开微信</button>
+        <button type="button" class="btn qq">复制链接并打开 QQ</button>
+      </div>
+      <p class="share-hint">提示：点击复制链接，分享给好友吧~</p>
       <div class="actions"><button value="close" class="btn">关闭</button></div>
     </form>
   </dialog>
