@@ -591,7 +591,8 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
 }
 
 /* ============ 访客总数（统计卡片底部） ============ */
-.visits { margin: 0; min-height: 1.5em; color: var(--muted); font-size: 12px; opacity: 0; transition: opacity .5s; }
+.visits { margin: 0; min-height: 1.6em; line-height: 1.6; color: var(--muted); font-size: 12px; opacity: 0; transition: opacity .5s; }
+.visits .nw { white-space: nowrap; } /* "欢迎各位旅行者~"放不下时整段换行，不从中间断开 */
 .visits.on { opacity: 1; }
 .visits b {
   --visits-color: #e2672e; /* 数字颜色：暖橙 */
