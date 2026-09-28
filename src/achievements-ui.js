@@ -81,11 +81,10 @@ if (viewing) {
   button.hidden = true;
 } else {
   button.addEventListener('click', () => open());
-  // 预加载成就页：指针移到奖杯上、手指按下时，以及首屏之后的空闲时间（点开时不用等下载）
+  // 成就页按需加载：只在指针移到奖杯上、手指按下时提前开始下载（约 13KB）。
+  // 不在首屏空闲时预加载——大多数访客不会打开成就页，这样每次首次访问可少 3 个 Edge Requests（LTS 1.2.2）
   button.addEventListener('pointerenter', loadPage, { once: true });
   button.addEventListener('touchstart', loadPage, { once: true, passive: true });
-  const idle = window.requestIdleCallback ?? (fn => setTimeout(fn, 3000));
-  addEventListener('load', () => idle(loadPage), { once: true });
   page.querySelector('.ach-back').addEventListener('click', closeLayer);
   const openFromUrl = () => { if (location.hash === ACHIEVEMENTS_HASH) open(false); };
   addEventListener('hashchange', openFromUrl);
