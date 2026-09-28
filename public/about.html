@@ -97,6 +97,10 @@
     .ico { display: inline-block; width: 1.5em; height: 1.5em; margin: 0 .25em; vertical-align: -.35em; border: 1.5px solid var(--ink); border-radius: 5px; background: #fff; box-shadow: 1.5px 2px 0 rgba(0,0,0,.12); }
     .ico svg { display: block; margin: calc(.25em - 1.5px) auto 0; width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
     .ico.dark { background: var(--ink); color: #fff; }
+    /* 访客数（不蒜子）：取到数字后才显示，服务故障时整行不出现 */
+    .visits { display: inline-block; margin: -2px 0 14px; padding: 4px 12px; border: 1.5px solid var(--ink); border-radius: 999px; background: #fff; color: var(--muted); font-size: 14px; }
+    .visits[hidden] { display: none; }
+    .visits b { color: var(--ink); font-size: 16px; }
     footer { margin-top: 48px; padding-top: 16px; border-top: 1.5px dashed var(--line); color: var(--muted); font-size: 14px; }
     footer a, main a { color: var(--ink); }
   </style>
@@ -109,6 +113,7 @@
   </header>
 
   <h1>城市制霸：标记你去过的每一座中国城市</h1>
+  <p class="visits" id="visits" hidden>已有 <b id="visits-num"></b> 位旅行者来过这里</p>
   <p class="lead">城市制霸是一个免费的在线足迹地图工具。在中国地图上给去过的城市涂色，按居住、短居、游玩、出差、路过区分，自动统计分数，一键生成可以分享的足迹地图。无需注册，手机和电脑的浏览器都能直接用。</p>
 
   <img src="/og.jpg" alt="城市制霸：标记了去过城市的中国足迹地图示例" width="1200" height="630">
@@ -207,5 +212,27 @@
     <p>灵感来自 itorr/china-ex。地图边界数据来自阿里 DataV GeoAtlas，行政区划以数据采集时为准。</p>
   </footer>
 </main>
+<script>
+  // 全站访客数：不蒜子（busuanzi.ibruce.info）。首页负责计数，这里读取并显示；不蒜子没有只读接口，这次请求本身也会计一次，
+  // 但访客数按人去重。只在正式域名上请求；BASE 为接入前的访客基数（接入不蒜子之前的访客，默认 0）
+  (function () {
+    var BASE = 0;
+    if (location.hostname !== 'china.loveyou.moe') return;
+    var cb = 'bsz_' + Math.random().toString(36).slice(2);
+    var s = document.createElement('script');
+    window[cb] = function (d) {
+      delete window[cb]; s.remove();
+      var n = Number(d && d.site_uv);
+      if (!n) return;
+      document.getElementById('visits-num').textContent = (n + BASE).toLocaleString('zh-CN');
+      document.getElementById('visits').hidden = false;
+    };
+    s.src = 'https://busuanzi.ibruce.info/busuanzi?jsonpCallback=' + cb;
+    s.referrerPolicy = 'no-referrer-when-downgrade';
+    s.async = true;
+    s.onerror = function () { delete window[cb]; s.remove(); };
+    document.head.appendChild(s);
+  })();
+</script>
 </body>
 </html>
