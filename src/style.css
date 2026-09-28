@@ -497,6 +497,10 @@ dialog[open], dialog[open]::backdrop { animation: fade-in .18s ease-out; }
 
 /* ============ 分享弹窗 ============ */
 #share-dialog { width: min(440px, calc(100vw - 32px)); }
+/* 手机：弹窗靠上显示，输入昵称时弹出的键盘占据下半屏，不会挡住输入框和按钮 */
+@media (max-width: 700px) {
+  #share-dialog { margin: max(16px, calc(env(safe-area-inset-top) + 8px)) auto auto; max-height: calc(100dvh - 32px); overflow-y: auto; }
+}
 #share-dialog .share-sum { color: var(--muted); }
 .share-name { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 12px; font-size: 14px; }
 .share-name small { margin-left: 4px; color: var(--muted); font-size: 12px; }

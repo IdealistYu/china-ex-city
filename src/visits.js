@@ -6,7 +6,7 @@
 // 访问次数本来就是"每打开一次加一"，每次打开都请求既准确，数字也随访问实时上涨。
 // 只在正式域名上请求，本地开发、测试不污染数据；请求失败时这一行留空，不影响网站
 const HOST = 'china.loveyou.moe';
-const BASE = 1530; // 接入不蒜子之前的访问次数（Vercel Analytics 的 Page Views）
+const BASE = 1528; // 接入不蒜子之前的访问次数（Vercel Analytics 的 Page Views）
 
 const line = document.querySelector('#visits');
 const num = line.querySelector('b');
