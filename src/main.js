@@ -18,7 +18,7 @@ import './backup-ui.js';
 import { ACHIEVEMENTS_HASH } from './achievements-ui.js';
 import './share-ui.js';
 import './view-ui.js';
-import { countVisit } from './visits.js';
+import { initVisits } from './visits.js';
 import { $, narrowScreen } from './dom.js';
 
 const svg = $('#map');
@@ -593,5 +593,5 @@ const preloadFine = () => loadFine().then(syncDetail).catch(() => { /* 加载失
 if ('requestIdleCallback' in window) requestIdleCallback(preloadFine, { timeout: 2000 });
 else setTimeout(preloadFine, 500);
 
-// 访客计数（不蒜子）：首屏稳定后再发，不影响加载速度
-addEventListener('load', () => setTimeout(countVisit, 1500), { once: true });
+// 访客总数（不蒜子）：有缓存时立即显示；需要请求时等首屏稳定后再发，不影响加载速度
+addEventListener('load', () => setTimeout(initVisits, 600), { once: true });
