@@ -275,6 +275,9 @@
    只多了展示时一直显示的高光、传说镭射、金 / 传说光晕，以及落定时的一道闪光 */
 .ach-card.big { width: 100%; cursor: inherit; transition: transform .15s ease-out; }
 .ach-card.big::after { opacity: 1; }
+/* 放大卡片的徽章始终单独成层：否则落定时扫光开始，徽章因与扫光层重叠被临时提升为独立合成层、重新绘制，
+   手机上会瞬间偏移一下再回来（LTS 1.2.2 修复） */
+.ach-card.big .ach-glyph { will-change: transform; }
 .ach-card.big[data-tier="legend"] .ach-art::before { opacity: 1; }
 .ach-card.big[data-tier="gold"] { box-shadow: calc(var(--k) * 3) calc(var(--k) * 5) 0 var(--shadow), 0 0 48px 6px rgba(255,196,50,.55); }
 .ach-card.big[data-tier="legend"] { box-shadow: calc(var(--k) * 3) calc(var(--k) * 5) 0 var(--shadow), -14px 0 50px rgba(136,174,255,.6), 14px 0 50px rgba(255,126,126,.6); }
