@@ -599,9 +599,8 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
 }
 
 /* ============ 访客总数（统计卡片底部） ============ */
-.visits { margin: 0; min-height: 1.6em; line-height: 1.6; color: var(--muted); font-size: 12px; opacity: 0; transition: opacity .5s; }
+.visits { margin: 0; min-height: 1.6em; line-height: 1.6; color: var(--muted); font-size: 12px; }
 .visits .nw { white-space: nowrap; } /* "欢迎各位旅行者~"放不下时整段换行，不从中间断开 */
-.visits.on { opacity: 1; }
 .visits b {
   --visits-color: #e2672e; /* 数字颜色：暖橙 */
   margin: 0 2px; color: var(--visits-color); font-size: 15px; font-weight: bold; font-variant-numeric: tabular-nums;
@@ -612,6 +611,7 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
 .odo-col { display: flex; flex-direction: column; width: .54em; text-align: center; word-break: break-all; line-height: 1.2em;
   transform: translateY(0); transition: transform calc(1.1s + var(--i) * .18s) cubic-bezier(.2, .7, .15, 1); }
 .visits b.done .odo-col { transform: translateY(calc((20 + var(--d)) * -1.2em)); }
+.visits b.wait { opacity: .55; } /* 数字到达前 / 请求失败时的占位符 */
 .visits .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* 只给读屏软件读的数字 */
 [data-mode="view"] .visits, #panel.collapsed .visits { display: none; }
-@media (prefers-reduced-motion: reduce) { .odo-col, .visits { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .odo-col { transition: none; } }

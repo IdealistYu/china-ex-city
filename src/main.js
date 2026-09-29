@@ -593,5 +593,5 @@ const preloadFine = () => loadFine().then(syncDetail).catch(() => { /* 加载失
 if ('requestIdleCallback' in window) requestIdleCallback(preloadFine, { timeout: 2000 });
 else setTimeout(preloadFine, 500);
 
-// 访客总数（不蒜子）：有缓存时立即显示；需要请求时等首屏稳定后再发，不影响加载速度
+// 访问次数（不蒜子）：等首屏稳定后再请求，不影响加载速度；数字到达前显示占位符
 addEventListener('load', () => setTimeout(initVisits, 600), { once: true });
