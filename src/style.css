@@ -194,7 +194,7 @@ dialog .actions { display: flex; justify-content: flex-end; gap: 8px; }
 /* 数据备份 */
 .backup { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
 .backup span { width: 100%; }
-.backup button { padding: 2px 8px; font-size: 12px; color: var(--ink); }
+.backup button { min-height: 24px; padding: 2px 8px; font-size: 12px; color: var(--ink); } /* 点击区域至少 24px（WCAG 2.5.8） */
 
 /* 省视图：本省进度、画笔、城市列表 */
 .province-head { display: flex; flex-direction: column; gap: 2px; }
@@ -612,5 +612,6 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
 .odo-col { display: flex; flex-direction: column; width: .54em; text-align: center; word-break: break-all; line-height: 1.2em;
   transform: translateY(0); transition: transform calc(1.1s + var(--i) * .18s) cubic-bezier(.2, .7, .15, 1); }
 .visits b.done .odo-col { transform: translateY(calc((20 + var(--d)) * -1.2em)); }
+.visits .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* 只给读屏软件读的数字 */
 [data-mode="view"] .visits, #panel.collapsed .visits { display: none; }
 @media (prefers-reduced-motion: reduce) { .odo-col, .visits { transition: none; } }

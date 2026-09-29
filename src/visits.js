@@ -16,8 +16,8 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const show = n => {
   const text = (n + BASE).toLocaleString('zh-CN');
   const digits = [...text];
-  num.setAttribute('aria-label', text);
-  num.innerHTML = digits.map((c, i) => /\d/.test(c)
+  // 读屏软件读隐藏的完整数字，里程表各列只是视觉效果（<b> 不能用 aria-label）
+  num.innerHTML = `<span class="vh">${text}</span>` + digits.map((c, i) => /\d/.test(c)
     ? `<span class="odo" aria-hidden="true"><span class="odo-col" style="--d:${c};--i:${digits.length - 1 - i}">${'0123456789'.repeat(3)}</span></span>`
     : `<span aria-hidden="true">${c}</span>`).join('');
   line.classList.add('on');
