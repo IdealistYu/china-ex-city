@@ -1,6 +1,6 @@
 {
   "name": "china-ex-city",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "private": true,
   "type": "module",
   "description": "中国城市制霸：省→市两级缩放的城市足迹标记工具",
