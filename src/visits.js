@@ -31,14 +31,17 @@ const show = n => {
 export const initVisits = async () => {
   try { localStorage.removeItem('china-ex-city:visits'); } catch { /* LTS 1.3.0～1.3.1 的访客数缓存，已不再使用 */ }
   if (!line.isConnected) return;
+  const ctrl = new AbortController(); // 不用 AbortSignal.timeout：iOS 16 以下（含其上的微信内置浏览器）不支持
+  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const r = await fetch('https://events.vercount.one/api/v2/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: `https://${HOST}/`, isNewUv: false }), // Vercount 按网址的域名区分站点
-      signal: AbortSignal.timeout(8000),
+      signal: ctrl.signal,
     });
     const n = Number((await r.json())?.data?.site_pv);
     if (r.ok && n) show(n);
   } catch { /* 失败或超时：保持占位符 */ }
+  clearTimeout(timer);
 };
