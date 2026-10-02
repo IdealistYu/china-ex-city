@@ -5,7 +5,6 @@
 // 去重：本站域名下的 cookie（与 Vercount 官方脚本同名、有效期一年），没有就作为新访客上报并写入。
 // 是第一方 cookie，不受 iPhone / 微信拦截第三方 cookie 影响；无痕模式、清除数据、换设备会再计一次。
 // 这句话随首屏一起显示，数字位置先放占位符"…"，数据到了再滚出数字；请求失败就一直显示占位符。
-// （以前整行等数据到了才淡入，成了页面最晚画出的最大文字，把 LCP 拖到 2 秒多）
 // 只在正式域名上请求，本地开发、测试不污染数据，这一行在模块加载时就移除，不会闪一下
 const HOST = 'china.loveyou.moe';
 const UV_COOKIE = 'vercount_uv_china_loveyou_moe';
@@ -31,20 +30,16 @@ const show = n => {
 export const initVisits = async () => {
   if (!line.isConnected) return;
   const isNewUv = !document.cookie.split('; ').includes(`${UV_COOKIE}=1`);
-  const ctrl = new AbortController(); // 不用 AbortSignal.timeout：iOS 16 以下（含其上的微信内置浏览器）不支持
-  const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const r = await fetch('https://events.vercount.one/api/v2/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: `https://${HOST}/`, isNewUv }), // Vercount 按网址的域名区分站点
-      signal: ctrl.signal,
     });
     const n = Number((await r.json())?.data?.site_uv);
-    if (!r.ok) return;
-    // 计数成功后才记下"来过"，请求失败下次仍按新访客上报
+    if (!r.ok || !n) return;
+    // 计数成功后才记下"来过"，失败时下次仍按新访客上报
     if (isNewUv) document.cookie = `${UV_COOKIE}=1; path=/; max-age=31536000; samesite=lax; secure`;
-    if (n) show(n);
-  } catch { /* 失败或超时：保持占位符 */ }
-  finally { clearTimeout(timer); }
+    show(n);
+  } catch { /* 请求失败：保持占位符 */ }
 };

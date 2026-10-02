@@ -1,6 +1,6 @@
 /* 成就页：全屏覆盖在地图上，卡牌式网格。稀有度颜色只在这里定义 */
 #achievements {
-  --bronze: #edb98a; --silver: #d3dbe6; --gold: #ffd95e;
+  --bronze: #edb98a;
   --legend: linear-gradient(135deg, #ff7e7e, #ffb57e 25%, #ffe57e 50%, #a8ffbe 75%, #88aeff);
   position: fixed; inset: 0; z-index: 40; overflow-y: auto; overscroll-behavior: contain;
   background: var(--bg);

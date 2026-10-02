@@ -5,8 +5,8 @@
 //   两种都算，取较短的。昵称是 UTF-8 的 base64url，最多 12 个字。
 // 【重要】CODES_V1 是冻结的：已经发出去的链接都按它解码，任何时候都不能修改、增删或重排。
 //         行政区划调整后如需编码新城市，新增 CODES_V2 与格式 "2d" / "2s"，并保留 v1 的解码。
-export const SHARE_PREFIX = '#/s/';
-export const MAX_NAME = 12;
+const SHARE_PREFIX = '#/s/';
+const MAX_NAME = 12;
 
 const CODES_V1 = [
   '110000',

@@ -22,7 +22,7 @@ const viewOf = prov => {
   const bw = bx1 - bx0, bh = by1 - by0;
   const k = Math.min(MAP.w * 0.86 / bw, MAP.h * 0.86 / bh);
   const vw = MAP.w / k, vh = MAP.h / k;
-  return { bx0, by0, bx1, by1, bw, bh, k, vw, vh, vx: bx0 + bw / 2 - vw / 2, vy: by0 + bh / 2 - vh / 2 };
+  return { bw, bh, k, vw, vh, vx: bx0 + bw / 2 - vw / 2, vy: by0 + bh / 2 - vh / 2 };
 };
 
 const layoutFor = (code, fine) => {
@@ -53,7 +53,7 @@ const buildSvg = (code, levels, fine) => {
   const full = t.visited === t.total;
   const pct = Math.round(t.visited / t.total * 100);
 
-  const { view: { bx0, by0, bx1, by1, bw, bh, k, vw, vh, vx, vy }, labels } = layoutFor(code, fine);
+  const { view: { k, vw, vh, vx, vy }, labels } = layoutFor(code, fine);
 
   const others = allUnits.filter(u => u.province !== code && u.d);
   const mapSvg = `
