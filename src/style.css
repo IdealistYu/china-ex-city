@@ -22,7 +22,6 @@
   --panel: rgba(255, 255, 255, .92);
   --paper: #fbf9f4;        /* 南海插图卡片底色 */
   --soft: #f7f4ee;         /* 对话框里的说明底色 */
-  --hover: #f4f1ea;        /* 白底按钮的悬停色 */
   --scrim: rgba(20, 18, 14, .72); /* 展示类弹层（图片预览、成就展示）的深色背景 */
   --shadow: rgba(0, 0, 0, .12);
   --focus: #3b82f6;
@@ -598,9 +597,9 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
   #view-cta p { margin-top: 6px; }
 }
 
-/* ============ 访客总数（统计卡片底部） ============ */
-.visits { margin: 0; min-height: 1.6em; line-height: 1.6; color: var(--muted); font-size: 12px; }
-.visits .nw { white-space: nowrap; } /* "欢迎各位旅行者~"放不下时整段换行，不从中间断开 */
+/* ============ 独立访客数（统计卡片底部） ============ */
+/* 一行短句，与上方导出 / 导入按钮用虚线隔开，作为卡片落款；不换行 */
+.visits { margin: 0; padding-top: 8px; border-top: 1.5px dashed var(--divider); min-height: 1.6em; line-height: 1.6; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .visits b {
   --visits-color: #e2672e; /* 数字颜色：暖橙 */
   margin: 0 2px; color: var(--visits-color); font-size: 15px; font-weight: bold; font-variant-numeric: tabular-nums;
@@ -608,7 +607,7 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
 /* 里程表：每位数字一列 0～9（重复三遍），从第一遍的 0 滚到第三遍的目标数字；个位最先停，高位依次延后。
    列盒子隐藏溢出，浏览器以盒子底边对齐基线；下移一个字体下沉量（0.23em），数字基线才与文字基线重合（下端对齐） */
 .odo { display: inline-block; height: 1.2em; line-height: 1.2em; overflow: hidden; vertical-align: -.23em; }
-.odo-col { display: flex; flex-direction: column; width: .54em; text-align: center; word-break: break-all; line-height: 1.2em;
+.odo-col { display: flex; flex-direction: column; width: .54em; text-align: center; white-space: normal; word-break: break-all; line-height: 1.2em;
   transform: translateY(0); transition: transform calc(1.1s + var(--i) * .18s) cubic-bezier(.2, .7, .15, 1); }
 .visits b.done .odo-col { transform: translateY(calc((20 + var(--d)) * -1.2em)); }
 .visits b.wait { opacity: .55; } /* 数字到达前 / 请求失败时的占位符 */
