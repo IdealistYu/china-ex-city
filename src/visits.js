@@ -1,14 +1,14 @@
-// 访问次数：Vercount（events.vercount.one，免费第三方计数，请求不经过 Vercel，不增加 Edge Requests）。
-// LTS 1.3.7 起由不蒜子（busuanzi.ibruce.info）改为 Vercount：不蒜子长时间 502 / 超时，数字一直加载不出来。
-// 直接显示 Vercount 的 site_pv，不再加基数：接入前的访问次数和不蒜子时期的计数已在 vercount.one 后台并入 site_pv。
-// 显示在全国视图统计卡片底部："小站第 N 次接待访问，欢迎各位旅行者~"，数字以里程表式滚动停到最终值。
+// 独立访客数：Vercount（events.vercount.one，免费第三方计数，请求不经过 Vercel，不增加 Edge Requests）。
+// 显示在全国视图统计卡片底部："欢迎第 N 位旅行者到访本站~"，数字以里程表式滚动停到最终值。
 //
-// 显示全站访问次数（site_pv）而不是访客数（site_uv）：访问次数本来就是"每打开一次加一"，
-// 每次打开都 POST 计数一次，返回值既准确，数字也随访问实时上涨。不报新访客（isNewUv: false），不写 cookie。
+// 每次打开首页都 POST 一次（访问次数 +1），返回全站数据，显示其中的独立访客数 site_uv。
+// 去重：本站域名下的 cookie（与 Vercount 官方脚本同名、有效期一年），没有就作为新访客上报并写入。
+// 是第一方 cookie，不受 iPhone / 微信拦截第三方 cookie 影响；无痕模式、清除数据、换设备会再计一次。
 // 这句话随首屏一起显示，数字位置先放占位符"…"，数据到了再滚出数字；请求失败就一直显示占位符。
 // （以前整行等数据到了才淡入，成了页面最晚画出的最大文字，把 LCP 拖到 2 秒多）
 // 只在正式域名上请求，本地开发、测试不污染数据，这一行在模块加载时就移除，不会闪一下
 const HOST = 'china.loveyou.moe';
+const UV_COOKIE = 'vercount_uv_china_loveyou_moe';
 
 const line = document.querySelector('#visits');
 const num = line.querySelector('b');
@@ -29,19 +29,22 @@ const show = n => {
 };
 
 export const initVisits = async () => {
-  try { localStorage.removeItem('china-ex-city:visits'); } catch { /* LTS 1.3.0～1.3.1 的访客数缓存，已不再使用 */ }
   if (!line.isConnected) return;
+  const isNewUv = !document.cookie.split('; ').includes(`${UV_COOKIE}=1`);
   const ctrl = new AbortController(); // 不用 AbortSignal.timeout：iOS 16 以下（含其上的微信内置浏览器）不支持
   const timer = setTimeout(() => ctrl.abort(), 8000);
   try {
     const r = await fetch('https://events.vercount.one/api/v2/log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: `https://${HOST}/`, isNewUv: false }), // Vercount 按网址的域名区分站点
+      body: JSON.stringify({ url: `https://${HOST}/`, isNewUv }), // Vercount 按网址的域名区分站点
       signal: ctrl.signal,
     });
-    const n = Number((await r.json())?.data?.site_pv);
-    if (r.ok && n) show(n);
+    const n = Number((await r.json())?.data?.site_uv);
+    if (!r.ok) return;
+    // 计数成功后才记下"来过"，请求失败下次仍按新访客上报
+    if (isNewUv) document.cookie = `${UV_COOKIE}=1; path=/; max-age=31536000; samesite=lax; secure`;
+    if (n) show(n);
   } catch { /* 失败或超时：保持占位符 */ }
-  clearTimeout(timer);
+  finally { clearTimeout(timer); }
 };
