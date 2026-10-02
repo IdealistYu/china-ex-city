@@ -9,4 +9,4 @@
 
 ## 其他
 
-- [源代码](https://github.com/IdealistYu/city-ex)：MIT 许可证
+- [源代码](https://github.com/IdealistYu/china-ex-city)：MIT 许可证
