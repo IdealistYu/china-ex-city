@@ -1,0 +1,597 @@
+// 入口：地图与视图切换（全国 ⇄ 省）、路由、标记交互、侧栏
+// 其余界面各自成模块：picker.js（等级弹窗）、locator.js（搜索定位）、image-ui.js（保存图片）、backup-ui.js（数据备份）
+import { inject } from '@vercel/analytics';
+import './card.css';
+import { LEVELS, levelOf, levelButtons, tally } from './levels.js';
+import { getLevel, setLevel, allLevels, onChange, viewing } from './store.js';
+import { isShareHash } from './share.js';
+import {
+  buildMap, paint, bringToFront, animateView, loadFine, setDetail, setScale, fitView, provinceView, unitsPerPixel,
+  currentView, svgRect, units, unitByCode, provinceByCode, unitsOf, unitPath, buildSanshaCard, SANSHA, FULL_VIEW,
+} from './map.js';
+import { layoutLabels, leaderEnd } from './label-layout.js';
+import { attachGestures } from './gesture.js';
+import { createLocator } from './locator.js';
+import { openPicker, closePicker, isPickerOpen, pickerContains } from './picker.js';
+import { setExportTarget } from './image-ui.js';
+import './backup-ui.js';
+import { ACHIEVEMENTS_HASH } from './achievements-ui.js';
+import './share-ui.js';
+import './view-ui.js';
+import { initVisits } from './visits.js';
+import { $, narrowScreen } from './dom.js';
+
+const svg = $('#map');
+const root = document.documentElement;
+
+const LABEL_PX = 13;       // 省视图中城市名的屏幕字号
+const PROV_LABEL_PX = 14;  // 全国视图放大后省名的屏幕字号
+const PROV_LABEL_ZOOM = 2; // 全国视图放大到几倍后显示省名、换精细版
+const MAX_ZOOM = { country: 12, province: 4 }; // 相对 home 视图的最大放大倍数
+
+// ---------- 初始化 ----------
+// Vercel Web Analytics
+inject();
+
+for (const l of LEVELS) if (l.value) root.style.setProperty(`--l${l.value}`, l.color);
+
+buildMap(svg);
+const sanshaCard = $('#sansha-card');
+const sanshaSvg = sanshaCard.querySelector('svg');
+buildSanshaCard(sanshaSvg);
+const paintAll = () => {
+  const levels = allLevels();
+  for (const u of units) paint(svg, u.code, levels[u.code] ?? 0);
+  paint(sanshaSvg, SANSHA, levels[SANSHA] ?? 0);
+};
+paintAll();
+
+// ---------- 视图状态 ----------
+let activeProvince = null; // 当前省；null 为全国视图
+let home = null;           // 当前视图的完整范围（缩放下限、复位目标）
+let autoExpanded = false;  // 手机端底部面板是否因进入省视图而自动展开（回到全国时再收起）
+let pendingFocus = null;   // 视图切换后要聚焦的城市
+
+// ---------- 侧栏：全国统计 / 本省进度、画笔、城市列表 ----------
+const renderStats = () => {
+  const levels = allLevels();
+  const { counts, score, visited, total } = tally(levels, units);
+  $('#score-num').textContent = score;
+  $('#visited').innerHTML = `已去 <b>${visited}</b> / ${total} 城`;
+  $('#level-stats').innerHTML = LEVELS.filter(l => l.value).map(l => `<li style="--c:${l.color}">
+      <i></i><span>${l.name}<small>${l.hint}</small></span><b>${counts[l.value]}</b></li>`).join('');
+  if (activeProvince) {
+    const t = tally(levels, unitsOf(activeProvince));
+    $('#province-progress').textContent = `${t.visited} / ${t.total} 城 · ${t.score} 分`;
+  }
+};
+
+// 画笔：省视图中选中一个等级后，点城市直接涂色（再点一次取消）
+let brush = null;
+const brushBar = $('#brush .options');
+brushBar.innerHTML = levelButtons(() => ' aria-pressed="false"');
+const setBrush = level => {
+  brush = level;
+  for (const b of brushBar.querySelectorAll('button')) {
+    b.classList.toggle('active', +b.dataset.level === brush);
+    b.setAttribute('aria-pressed', +b.dataset.level === brush);
+  }
+};
+brushBar.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b) setBrush(brush === +b.dataset.level ? null : +b.dataset.level);
+});
+
+// 标记一个城市：画笔模式直接涂色，否则弹出等级菜单
+const mark = (code, x, y, avoid = null) => {
+  if (viewing) return; // 查看模式只读
+  if (brush !== null) setLevel(code, getLevel(code) === brush ? 0 : brush);
+  else openPicker(code, x, y, avoid);
+};
+
+// 城市列表：小城市、三沙等不好在地图上点的在这里选
+const renderCityList = code => {
+  $('#city-list').innerHTML = unitsOf(code).map(u =>
+    `<button data-code="${u.code}" style="--c:${levelOf(getLevel(u.code)).color}">${u.short}</button>`).join('');
+};
+$('#city-list').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const r = b.getBoundingClientRect();
+  mark(b.dataset.code, r.left + r.width / 2, r.top + r.height / 2, r);
+});
+
+// ---------- 随视图同步的显示状态 ----------
+const NS = 'http://www.w3.org/2000/svg';
+const LEADER_DOT = 3.5; // 引线端点圆点半径（屏幕像素）
+
+const setLabelSize = view => {
+  const upp = unitsPerPixel(svg, view);
+  svg.style.setProperty('--label-size', `${LABEL_PX * upp}px`);
+  // 引线端点圆点保持固定的屏幕大小
+  for (const c of svg.querySelectorAll('.labels g.active .leaders circle')) c.setAttribute('r', LEADER_DOT * upp);
+};
+
+// 省视图城市名布局：以本省完整视图（home）为准，城市名互不重叠、落在各自城市内，放不下的用引线。
+// 之后放大时文字保持屏幕大小不变、城市之间的距离变大，所以不会产生新的重叠
+const layoutProvinceLabels = (code, view) => {
+  const g = svg.querySelector(`.labels g[data-province="${code}"]`);
+  if (!g) return;
+  const upp = unitsPerPixel(svg, view), k = 1 / upp;
+  const { left = 0, top = 0, right = 0, bottom = 0 } = viewInsets();
+  const { left: sx, top: sy, width, height } = svgRect(svg);
+  const card = sanshaCard.hidden ? null : sanshaCard.getBoundingClientRect(); // 三沙卡片（海南）
+  const { labels, missing, offscreen } = layoutLabels({
+    units: unitsOf(code).filter(u => u.d),
+    pathOf: unitPath,
+    view: { vx: view[0], vy: view[1], k },
+    bounds: { x0: left + 6, y0: top + 6, x1: width - right - 6, y1: height - bottom - 6 },
+    base: LABEL_PX,
+    scales: [1, 0.85],
+    avoid: [card, floatRect()].filter(Boolean).map(r => ({ x0: r.left - sx - 4, y0: r.top - sy - 4, x1: r.right - sx + 4, y1: r.bottom - sy + 4 })),
+  });
+  const leaders = g.querySelector('.leaders');
+  leaders.replaceChildren();
+  for (const l of labels) {
+    const t = g.querySelector(`text[data-code="${l.u.code}"]`);
+    t.setAttribute('x', view[0] + l.x * upp);
+    t.setAttribute('y', view[1] + l.y * upp);
+    t.style.setProperty('--ls', l.s / LABEL_PX);
+    t.removeAttribute('hidden');
+    if (l.leader) {
+      const [ax, ay] = l.leader, [ex, ey] = leaderEnd(l);
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', view[0] + ax * upp); line.setAttribute('y1', view[1] + ay * upp);
+      line.setAttribute('x2', view[0] + ex * upp); line.setAttribute('y2', view[1] + ey * upp);
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', view[0] + ax * upp); dot.setAttribute('cy', view[1] + ay * upp);
+      dot.setAttribute('r', LEADER_DOT * upp);
+      leaders.append(line, dot);
+    }
+  }
+  // 移出屏幕的城市：名字放回标注点原位（看不见，拖回来时会重新布局）
+  for (const u of offscreen) {
+    const t = g.querySelector(`text[data-code="${u.code}"]`);
+    t.setAttribute('x', u.label[0]); t.setAttribute('y', u.label[1]);
+    t.style.removeProperty('--ls');
+    t.removeAttribute('hidden');
+  }
+  // 极端情况下仍放不下的城市名隐藏（记录数量供测试检查），城市本身仍可在列表中选择
+  for (const name of missing) {
+    const u = unitsOf(code).find(x => x.short === name);
+    g.querySelector(`text[data-code="${u.code}"]`).setAttribute('hidden', '');
+  }
+  g.dataset.missing = missing.length;
+};
+
+// 全国视图放大后显示省名
+const updateCountryLabels = view => {
+  const zoomed = !activeProvince && home && home[2] / view[2] >= PROV_LABEL_ZOOM;
+  svg.classList.toggle('zoomed', zoomed);
+  if (zoomed) svg.style.setProperty('--prov-label-size', `${PROV_LABEL_PX * unitsPerPixel(svg, view)}px`);
+};
+
+const syncLabels = view => (activeProvince ? setLabelSize(view) : updateCountryLabels(view));
+
+// 投影偏移随缩放保持屏幕上的固定像素
+const syncScale = view => setScale(svg, unitsPerPixel(svg, view));
+
+// 精度：省视图或全国视图放大后用精细版，其余用粗略版
+const syncDetail = () => setDetail(svg, activeProvince || svg.classList.contains('zoomed') ? 'fine' : 'coarse');
+
+// 悬停提示与点击效果一致：全国视图显示省名（点了进入该省）；
+// 省视图里本省城市显示城市名（点了标记），邻省显示省名（点了切换过去）
+const unitTitles = [...svg.querySelectorAll('.prov .unit > title')].map(t => {
+  const u = unitByCode.get(t.parentNode.dataset.code);
+  return { t, u, provinceName: provinceByCode.get(u.province).name };
+});
+const syncTitles = () => {
+  for (const { t, u, provinceName } of unitTitles) t.textContent = u.province === activeProvince ? u.name : provinceName;
+};
+
+// ---------- 视图范围 ----------
+// 地图被界面遮住的边距：顶栏，以及侧栏
+//   窄屏：侧栏在底部，让出底部
+//   宽屏省视图：侧栏在右侧，让出右侧
+//   宽屏全国视图：统计卡片在左下角，那里本来就是地图的空白区（西藏以南），不必让出
+const viewInsets = () => {
+  const top = $('#topbar').getBoundingClientRect().bottom;
+  const panel = $('#panel').getBoundingClientRect();
+  if (narrowScreen.matches) return { top, bottom: innerHeight - panel.top };
+  if (activeProvince) return { top, right: innerWidth - panel.left };
+  return { top };
+};
+
+// 手机顶栏下方竖排的奖杯、分享按钮所占的屏幕矩形（它们浮在地图上，地图与城市名要避开）；不显示时为 null
+const floatRect = () => {
+  if (!narrowScreen.matches || viewing) return null;
+  const a = $('#trophy').getBoundingClientRect(), b = $('#share').getBoundingClientRect();
+  if (!a.width || !b.width) return null;
+  return { left: Math.min(a.left, b.left) - 4, top: a.top - 4, right: Math.max(a.right, b.right) + 4, bottom: b.bottom + 6 };
+};
+
+// 屏幕矩形 rect 在视图 view 下是否压到城市轮廓（在矩形内取样点，用实际形状判断）；province 只看该省的城市
+const coversMap = (view, rect, province = null) => {
+  const { left, top, width } = svgRect(svg);
+  const k = view[2] / width;
+  const [x0, y0] = [view[0] + (rect.left - left) * k, view[1] + (rect.top - top) * k];
+  const [x1, y1] = [view[0] + (rect.right - left) * k, view[1] + (rect.bottom - top) * k];
+  const candidates = units.filter(u => u.d && (!province || u.province === province) && u.bbox[0] < x1 && u.bbox[2] > x0 && u.bbox[1] < y1 && u.bbox[3] > y0)
+    .map(u => svg.querySelector(`.prov .unit[data-code="${u.code}"]`));
+  const N = 12;
+  for (let i = 0; i <= N; i++) for (let j = 0; j <= N; j++) {
+    const pt = new DOMPoint(x0 + (x1 - x0) * i / N, y0 + (y1 - y0) * j / N);
+    if (candidates.some(p => p.isPointInFill(pt))) return true;
+  }
+  return false;
+};
+
+// 逐步给屏幕矩形 rect 让出上方或右侧（各 0 / 25% / 50% / 75% / 100%），返回不压陆地、地图最大（视图最窄）的边距；
+// province 给定时只避让该省的城市
+const avoidInsets = (box, insets, rect, province = null) => {
+  const { top = 0, right = 0 } = insets;
+  let best = null;
+  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+    for (const extra of [{ top: top + Math.max(0, rect.bottom - top) * t }, { right: right + Math.max(0, innerWidth - rect.left - right) * t }]) {
+      const cand = { ...insets, ...extra };
+      const view = fitView(svg, box, cand);
+      if (!coversMap(view, rect, province) && (!best || view[2] < best.view[2])) best = { cand, view };
+    }
+  }
+  return best?.cand ?? { ...insets, top: Math.max(top, rect.bottom) };
+};
+const avoidRect = (box, insets, rect) => fitView(svg, box, avoidInsets(box, insets, rect));
+
+// 全国视图：统计卡片一般落在左下空白区；窗口偏窄、卡片会压到地图时，再给它让出左侧
+const countryFit = () => {
+  const insets = viewInsets();
+  const view = fitView(svg, FULL_VIEW, insets);
+  if (narrowScreen.matches) {
+    // 手机浮动按钮压到陆地时：逐步给它让出上方或右侧，取不压陆地、地图最大的一种
+    //（全国地图在手机上通常宽度受限、纵向有富余，下移往往不缩小；矮屏上让右侧更划算）
+    const f = floatRect();
+    return f ? avoidRect(FULL_VIEW, insets, f) : view;
+  }
+  const card = $('#panel').getBoundingClientRect();
+  return coversMap(view, card) ? fitView(svg, FULL_VIEW, { ...insets, left: card.right + 8 }) : view;
+};
+
+// 省视图；海南显示三沙卡片时，卡片在可见区域右下角。海南岛东南方是海，先按正常大小放，
+// 卡片压到陆地时再逐步给它让出右侧或下方，取不压住陆地、地图最大的一种
+const provinceFit = code => {
+  let insets = viewInsets();
+  const box = provinceView(code);
+  // 手机浮动按钮压到本省（邻省不算）时，给它让出上方或右侧
+  const f = floatRect();
+  if (f) insets = avoidInsets(box, insets, f, code);
+  const plain = fitView(svg, box, insets);
+  if (sanshaCard.hidden) return plain;
+  const { width: cw, height: ch } = sanshaCard.getBoundingClientRect();
+  const { right = 0, bottom = 0 } = insets;
+  const x1 = innerWidth - right - 16, y1 = innerHeight - bottom - 16;
+  const card = { left: x1 - cw, top: y1 - ch, right: x1, bottom: y1 };
+  let best = null;
+  for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+    for (const extra of [{ right: right + (cw + 16) * t }, { bottom: bottom + (ch + 16) * t }]) {
+      const view = fitView(svg, box, { ...insets, ...extra });
+      if ((!best || view[2] < best[2]) && !coversMap(view, card)) best = view; // 视图越窄，地图越大
+    }
+    if (best) return best;
+  }
+  return best ?? plain;
+};
+
+// 聚焦某个城市的视图：留出边距，但不超过最大缩放
+const focusView = code => {
+  const u = unitByCode.get(code);
+  if (!u.d) return home; // 三沙不在主图上
+  const [x0, y0, x1, y1] = u.bbox;
+  const w = x1 - x0, h = y1 - y0, m = Math.max(w, h) * 0.6;
+  const v = fitView(svg, [x0 - m, y0 - m, w + m * 2, h + m * 2], viewInsets());
+  const minW = home[2] / MAX_ZOOM[activeProvince ? 'province' : 'country'];
+  if (v[2] >= minW) return v;
+  const k = minW / v[2];
+  const cx = v[0] + v[2] / 2, cy = v[1] + v[3] / 2;
+  return [cx - (v[2] * k) / 2, cy - (v[3] * k) / 2, v[2] * k, v[3] * k];
+};
+
+// 闪烁提示并在旁边弹出等级菜单
+const highlight = code => {
+  const path = bringToFront(svg, code); // 描边不被邻居盖住
+  if (!path) return openPicker(code, innerWidth / 2, innerHeight / 2); // 三沙
+  path.classList.remove('flash');
+  void path.getBoundingClientRect(); // 重启动画
+  path.classList.add('flash');
+  const r = path.getBoundingClientRect();
+  openPicker(code, r.left + r.width / 2, r.top + r.height / 2, r);
+};
+
+// ---------- 视图切换 ----------
+// 最后一步：飞到 home 或待聚焦的城市
+const flyTo = async () => {
+  const focus = pendingFocus;
+  pendingFocus = null;
+  const target = focus ? focusView(focus) : home;
+  syncLabels(target);
+  if (activeProvince) syncDetail(); // 放大前换精细版
+  await animateView(svg, target, 650, syncScale);
+  syncDetail(); // 缩回全国后再换粗略版，避免动画途中轮廓跳变
+  if (focus) highlight(focus);
+};
+
+const enterProvince = async code => {
+  const p = provinceByCode.get(code);
+  if (!p || p.single) return showCountry();
+  activeProvince = code;
+  closePicker();
+  for (const g of svg.querySelectorAll('[data-province]')) g.classList.toggle('active', g.dataset.province === code);
+  root.dataset.view = 'province';
+  svg.classList.remove('zoomed');
+  $('#crumb-province .crumb-leaf').textContent = p.name;
+  $('#crumb-province').hidden = false;
+  $('#province-name').textContent = p.name;
+  $('#stats').hidden = true;
+  $('#province').hidden = false;
+  // 手机端进入省视图时展开底部面板，画笔和城市列表直接可用（随后按展开后的面板计算视图）
+  if (narrowScreen.matches && panel.classList.contains('collapsed')) {
+    applyCollapsed(false);
+    autoExpanded = true;
+  }
+  sanshaCard.hidden = !unitsOf(code).some(u => u.code === SANSHA);
+  renderCityList(code);
+  renderStats();
+  placeSanshaCard(); // 城市列表渲染后面板才是最终高度
+  syncTitles();
+  setExportTarget(code);
+  home = provinceFit(code);
+  layoutProvinceLabels(code, home);
+  await flyTo();
+};
+
+const showCountry = async () => {
+  activeProvince = null;
+  closePicker();
+  setBrush(null); // 画笔只在省视图有效
+  root.dataset.view = 'country';
+  $('#crumb-province').hidden = true;
+  $('#stats').hidden = false;
+  $('#province').hidden = true;
+  sanshaCard.hidden = true;
+  if (autoExpanded) applyCollapsed(true);
+  autoExpanded = false;
+  for (const g of svg.querySelectorAll('.active')) g.classList.remove('active');
+  syncTitles();
+  setExportTarget(null);
+  home = countryFit();
+  await flyTo();
+};
+
+// hash 路由：#/440000 表示广东省视图，浏览器返回即缩回全国。
+// #/achievements 是盖在地图上的成就页（achievements-ui.js 负责），地图保持不动；
+// 从成就页等弹层返回时，目标省份与当前相同，也不重新飞行（保留用户的缩放位置）
+// 查看模式（#/s/…）下网址整体带着分享部分：省份为 #/s/…/440000，返回全国回到 #/s/…
+let routed = false;
+const HOME_HASH = viewing ? viewing.key : '';
+const provinceHash = code => `${viewing ? viewing.key : '#'}/${code}`;
+const route = () => {
+  // 在普通模式与查看模式之间切换（或换了另一条分享链接）：整页重新加载，状态最干净
+  if (isShareHash(location.hash) !== !!viewing || (viewing && !location.hash.startsWith(viewing.key))) return location.reload();
+  const rest = viewing ? location.hash.slice(viewing.key.length) : location.hash.slice(1);
+  const code = rest.match(/^\/(\d{6})$/)?.[1];
+  const target = code && provinceByCode.has(code) && !provinceByCode.get(code).single ? code : null;
+  if (routed && (location.hash === ACHIEVEMENTS_HASH || target === activeProvince)) return;
+  routed = true;
+  if (target) enterProvince(target);
+  else showCountry();
+};
+addEventListener('hashchange', route);
+
+const goProvince = (code, focus = null) => {
+  pendingFocus = focus;
+  const hash = provinceHash(code);
+  if (location.hash === hash) return flyTo();
+  // 从全国进入时新增历史记录（返回键回到全国）；省与省之间切换则替换当前记录
+  if (activeProvince) history.replaceState(history.state, '', hash);
+  else history.pushState({ fromCountry: true }, '', hash);
+  route();
+};
+
+// 返回全国：若是从全国进来的就退一步历史，否则直接改 hash
+const goBack = () => {
+  if (history.state?.fromCountry) history.back();
+  else location.hash = HOME_HASH;
+};
+
+const goCountry = (focus = null) => {
+  pendingFocus = focus;
+  if (!activeProvince) return flyTo();
+  goBack();
+};
+
+const focusCity = code => {
+  const u = unitByCode.get(code);
+  if (provinceByCode.get(u.province).single) goCountry(code);
+  else goProvince(u.province, code);
+};
+
+// 复位到当前视图的完整范围
+const resetView = () => {
+  closePicker();
+  clearTimeout(relayoutTimer);
+  if (activeProvince) layoutProvinceLabels(activeProvince, home);
+  syncLabels(home);
+  animateView(svg, home, 400, syncScale).then(syncDetail);
+};
+
+// ---------- 顶栏：面包屑与搜索定位 ----------
+// 根节点在省视图时返回全国、在全国视图时复位；省名复位本省视图
+$('#crumb-root').addEventListener('click', () => (activeProvince ? goBack() : resetView()));
+$('#crumb-province .crumb-leaf').addEventListener('click', resetView);
+
+const locator = createLocator({
+  box: $('#search'),
+  panel: $('#locator'),
+  onCity: focusCity,
+  onProvince: code => goProvince(code),
+  getActiveProvince: () => activeProvince,
+});
+
+// ---------- 三沙卡片 ----------
+// 放在地图可见区域的右下角（海南岛东南方是海，空间大；窄屏时在底部面板上方）
+const placeSanshaCard = () => {
+  if (sanshaCard.hidden) return;
+  const { right = 0, bottom = 0 } = viewInsets();
+  sanshaCard.style.right = `${right + 16}px`;
+  sanshaCard.style.bottom = `${bottom + 16}px`;
+};
+sanshaCard.addEventListener('click', e => {
+  e.stopPropagation();
+  const r = sanshaCard.getBoundingClientRect();
+  mark(SANSHA, r.left + r.width / 2, r.top + r.height / 2, r);
+});
+
+// ---------- 地图交互 ----------
+// 点击点周围的一小块区域：弹窗放在它旁边而不是正中间，避免挡住刚点的城市
+const nearClick = e => new DOMRect(e.clientX - 16, e.clientY - 16, 32, 32);
+
+svg.addEventListener('click', e => {
+  e.stopPropagation();
+  if (locator.isOpen()) return locator.close(); // 点地图先关菜单
+  const unit = e.target.closest('.unit');
+  const provCode = unit?.closest('[data-province]').dataset.province;
+  const single = provCode && provinceByCode.get(provCode).single;
+
+  if (!activeProvince) {
+    closePicker();
+    if (single) mark(provCode, e.clientX, e.clientY, nearClick(e)); // 港澳、直辖市：直接标记
+    else if (provCode) goProvince(provCode);
+    return;
+  }
+  if (provCode === activeProvince) return mark(unit.dataset.code, e.clientX, e.clientY, nearClick(e)); // 弹窗开着也直接换到新城市
+  if (isPickerOpen()) return closePicker();                   // 弹窗开着时点别处只关弹窗
+  if (!provCode) goBack();                                    // 点海面：回全国
+  else if (single) mark(provCode, e.clientX, e.clientY, nearClick(e));
+  else goProvince(provCode);                                  // 邻省：直接切过去
+});
+
+let relayoutTimer = 0;
+attachGestures(svg, {
+  getHome: () => home,
+  maxZoom: () => MAX_ZOOM[activeProvince ? 'province' : 'country'],
+  onStart: () => { closePicker(); locator.close(); },
+  onChange: view => {
+    syncLabels(view);
+    syncScale(view);
+    syncDetail();
+    // 缩放停下后按当前视图重新布局城市名：放大后空间变多，完整视图下放不下的名字也能显示
+    clearTimeout(relayoutTimer);
+    if (activeProvince) relayoutTimer = setTimeout(() => layoutProvinceLabels(activeProvince, currentView(svg)), 200);
+  },
+});
+
+// ---------- 全局事件 ----------
+document.addEventListener('click', e => {
+  if (isPickerOpen() && !pickerContains(e.target) && !e.target.closest('#city-list')) closePicker();
+});
+
+// Esc：全屏弹层由 layers.js 先处理；原生对话框由浏览器处理
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' || document.querySelector('dialog[open]')) return;
+  if (locator.isOpen()) locator.close();
+  else if (isPickerOpen()) closePicker();
+  else if (activeProvince) goBack();
+});
+
+// 可见区域变化后重新适配：重新计算 home，并保留用户当前的放大倍数和视图中心（在完整视图时正好回到新的完整视图）
+const refit = (animate = false) => {
+  const old = currentView(svg);
+  const zoom = home ? home[2] / old[2] : 1;
+  const cx = old[0] + old[2] / 2, cy = old[1] + old[3] / 2;
+  home = activeProvince ? provinceFit(activeProvince) : countryFit();
+  const w = home[2] / zoom, h = home[3] / zoom;
+  const view = [
+    Math.min(Math.max(cx - w / 2, home[0]), home[0] + home[2] - w),
+    Math.min(Math.max(cy - h / 2, home[1]), home[1] + home[3] - h),
+    w, h,
+  ];
+  placeSanshaCard(); // 先放好三沙卡片，城市名布局要避开它
+  if (activeProvince) layoutProvinceLabels(activeProvince, home);
+  syncLabels(view);
+  if (animate) return animateView(svg, view, 300, syncScale);
+  svg.setAttribute('viewBox', view.join(' '));
+  syncScale(view);
+};
+
+// 窗口尺寸变化（旋转屏幕、调整窗口）。手机上输入框聚焦时弹出键盘只是临时遮挡，
+// 只有高度变化时不重新适配，避免地图随键盘来回跳动
+// 拖动窗口时 resize 会连续触发，合并到下一帧只适配一次，避免每次事件都强制重排
+let lastWidth = innerWidth, refitFrame = 0;
+addEventListener('resize', () => {
+  const widthChanged = innerWidth !== lastWidth;
+  lastWidth = innerWidth;
+  if (!widthChanged && document.activeElement?.matches('input, textarea')) return;
+  cancelAnimationFrame(refitFrame);
+  refitFrame = requestAnimationFrame(() => refit());
+});
+
+// ---------- 手机端底部面板：点击把手或上下拖动收起 / 展开 ----------
+const panel = $('#panel');
+const panelToggle = $('#panel-toggle');
+const PANEL_KEY = 'china-ex-city:panel-collapsed';
+const applyCollapsed = collapsed => {
+  panel.classList.toggle('collapsed', collapsed);
+  panelToggle.setAttribute('aria-expanded', !collapsed);
+  panelToggle.setAttribute('aria-label', collapsed ? '展开面板' : '收起面板');
+  try { localStorage.setItem(PANEL_KEY, collapsed ? '1' : ''); } catch { /* 忽略 */ }
+};
+const setCollapsed = (collapsed, animate = true) => {
+  autoExpanded = false; // 用户自己操作过，回到全国时不再替他收起
+  applyCollapsed(collapsed);
+  if (narrowScreen.matches) refit(animate);
+};
+let dragStart = null;
+panelToggle.addEventListener('pointerdown', e => {
+  dragStart = e.clientY;
+  try { panelToggle.setPointerCapture(e.pointerId); } catch { /* 指针已失效时忽略 */ }
+});
+panelToggle.addEventListener('pointerup', e => {
+  if (dragStart === null) return;
+  const dy = e.clientY - dragStart;
+  dragStart = null;
+  if (dy > 24) setCollapsed(true);       // 向下拖：收起
+  else if (dy < -24) setCollapsed(false); // 向上拖：展开
+  else setCollapsed(!panel.classList.contains('collapsed')); // 轻点：切换
+});
+panelToggle.addEventListener('pointercancel', () => { dragStart = null; });
+// 键盘操作（Enter / 空格）产生的 click 没有 pointer 事件
+panelToggle.addEventListener('click', e => { if (e.detail === 0) setCollapsed(!panel.classList.contains('collapsed')); });
+// 查看模式下面板默认展开（分享者的数据要第一眼看到），不沿用自己上次的收起状态
+try { if (!viewing && localStorage.getItem(PANEL_KEY)) panel.classList.add('collapsed'); } catch { /* 忽略 */ }
+panelToggle.setAttribute('aria-expanded', !panel.classList.contains('collapsed'));
+
+// 数据变化（code 为 null 表示整体变化：导入备份、其他标签页修改）
+onChange((code, level) => {
+  if (code === null) paintAll();
+  else {
+    paint(svg, code, level);
+    if (code === SANSHA) paint(sanshaSvg, code, level);
+  }
+  renderStats();
+  if (activeProvince) renderCityList(activeProvince);
+  locator.refresh();
+});
+
+// ---------- 启动 ----------
+renderStats();
+root.dataset.view = 'country';
+svg.setAttribute('viewBox', countryFit().join(' '));
+syncScale(currentView(svg));
+route();
+
+// 首屏之后在后台加载精细版边界，加载完若已在省视图就立即换上
+const preloadFine = () => loadFine().then(syncDetail).catch(() => { /* 加载失败就一直用粗略版 */ });
+if ('requestIdleCallback' in window) requestIdleCallback(preloadFine, { timeout: 2000 });
+else setTimeout(preloadFine, 500);
+
+// 独立访客数（Vercount）：等首屏稳定后再请求，不影响加载速度；数字到达前显示占位符
+addEventListener('load', () => setTimeout(initVisits, 600), { once: true });

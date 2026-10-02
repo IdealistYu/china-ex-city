@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-Hans" data-view="country">
+<head>
+  <meta charset="UTF-8">
+  <!-- 打开别人的分享链接（#/s/…）时，在首次绘制前就切到查看模式的样式，避免先显示普通界面再跳变 -->
+  <script>if (location.hash.startsWith('#/s/')) document.documentElement.dataset.mode = 'view';</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>城市制霸 - 标记你去过的中国城市，生成城市足迹地图</title>
+  <meta name="description" content="标记你去过的每一座中国城市，按居住、短居、游玩、出差、路过给城市上色，生成你的城市足迹地图">
+  <meta name="keywords" content="城市制霸,中国制霸,足迹地图,去过的城市,旅行足迹,城市打卡,中国地图涂色,旅行地图生成">
+  <meta name="theme-color" content="#f3efe6">
+  <!-- 结构化数据：让搜索引擎识别为免费的网页工具 -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "城市制霸",
+    "url": "https://china.loveyou.moe/",
+    "description": "在中国地图上标记你去过的 370 座城市，按居住、短居、游玩、出差、路过上色，生成全国或单省的城市足迹地图。",
+    "applicationCategory": "TravelApplication",
+    "operatingSystem": "Any",
+    "inLanguage": "zh-CN",
+    "image": "https://china.loveyou.moe/og.jpg",
+    "featureList": ["全国与省两级地图标记 370 座城市", "五个等级上色并自动计分", "导出全国足迹图与单省制霸图", "33 个收集成就", "链接分享足迹地图", "数据只存本机，支持 JSON 备份"],
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" }
+  }
+  </script>
+  <!-- 分享预览（微信、QQ、微博、Telegram、X 等读取；图片须为完整网址） -->
+  <link rel="canonical" href="https://china.loveyou.moe/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="城市制霸">
+  <meta property="og:url" content="https://china.loveyou.moe/">
+  <meta property="og:title" content="城市制霸 · 标记你去过的每一座中国城市">
+  <meta property="og:description" content="370 座城市，按居住、短居、游玩、出差、路过涂色，一键生成你的城市足迹地图。">
+  <meta property="og:image" content="https://china.loveyou.moe/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="城市制霸：一张标记了去过城市的中国地图">
+  <meta property="og:locale" content="zh_CN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="城市制霸 · 标记你去过的每一座中国城市">
+  <meta name="twitter:description" content="370 座城市，按居住、短居、游玩、出差、路过涂色，一键生成你的城市足迹地图。">
+  <meta name="twitter:image" content="https://china.loveyou.moe/og.jpg">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="/icon-96.png" sizes="96x96" type="image/png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <!-- 字体尽早加载，避免首屏先用系统字体再闪一下 -->
+  <link rel="preload" href="/src/fonts/cityex-sans.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <!-- 顶栏：面包屑 · 搜索 · 保存 -->
+  <header id="topbar">
+    <nav id="crumb" aria-label="当前位置">
+      <button id="crumb-root" class="crumb-root">城市制霸</button>
+      <span id="crumb-province" hidden><span class="sep" aria-hidden="true">›</span><button class="crumb-leaf" title="复位视图"></button></span>
+    </nav>
+    <div id="search" class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+      <input type="search" role="combobox" aria-expanded="false" aria-controls="locator" aria-autocomplete="list" placeholder="搜索城市、省份或拼音" aria-label="搜索城市或省份" autocomplete="off" enterkeyhint="go">
+    </div>
+    <a id="help" class="btn icon-btn" href="about.html" aria-label="使用说明" title="使用说明">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 8.4a4.4 4.4 0 1 1 6.3 4c-1.1.5-1.9 1.4-1.9 2.6v.8" stroke-width="2.6"/><circle class="dot" cx="12" cy="19.6" r="1.6"/></svg>
+    </a>
+    <button id="trophy" class="btn icon-btn" type="button" aria-label="成就" title="成就">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v4M8 20h8"/></svg>
+    </button>
+    <a id="repo" class="btn icon-btn" href="https://github.com/IdealistYu/china-ex-city" target="_blank" rel="noopener" aria-label="GitHub 代码仓库" title="GitHub 代码仓库">
+      <svg class="solid" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    </a>
+    <button id="save" class="btn primary" aria-label="保存全国图" title="保存全国图">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4.5-4.5L12 15l4.5-4.5M5 19h14"/></svg>
+      <span>保存全国图</span>
+    </button>
+    <button id="share" class="btn icon-btn" type="button" aria-label="分享我的制霸图" title="分享我的制霸图">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3.5 21 10.5 13 17.5V13.6c-5 0-8.1 2-10 6.4.5-7.5 4-11.6 10-12.1z"/></svg>
+    </button>
+  </header>
+
+  <div id="locator" hidden>
+    <div class="locator-body"></div>
+  </div>
+
+  <main id="stage">
+    <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+    <!-- 海南省视图：三沙远在南海，主图上点不到，用这张小卡片标记 -->
+    <button id="sansha-card" type="button" hidden aria-label="标记三沙市（南海诸岛）">
+      <svg aria-hidden="true"></svg>
+      <span class="name">三沙</span>
+      <span class="caption">南海诸岛</span>
+    </button>
+  </main>
+
+  <!-- 侧栏（窄屏为底部面板）：全国视图显示统计，省视图显示本省进度、画笔、城市列表 -->
+  <aside id="panel">
+    <!-- 手机端：点击或上下拖动收起 / 展开面板 -->
+    <button id="panel-toggle" class="panel-handle" type="button" aria-expanded="true" aria-controls="panel" aria-label="收起面板"><svg viewBox="0 0 44 12" aria-hidden="true"><path d="M3 10 22 2.5 41 10"/></svg></button>
+    <!-- 查看模式（别人的分享链接）：标题。以下三块只在 data-mode="view" 时由样式显示（首帧即是最终高度，不跳动） -->
+    <div id="view-head">
+      <span class="view-tag">足迹分享</span>
+      <h2 id="view-title"><b></b>的城市制霸图</h2>
+    </div>
+    <section id="stats">
+      <div class="score-line">
+        <div class="score"><b id="score-num">0</b><span>分</span></div>
+        <div id="visited"></div>
+      </div>
+      <ul id="level-stats"></ul>
+      <!-- 查看模式：分享者的成就缩略统计 -->
+      <div id="view-ach"></div>
+      <p class="tip">点击省份进入，给去过的城市标记等级</p>
+      <div class="backup">
+        <span>数据只保存在本浏览器</span>
+        <button id="export-data" type="button" title="导出为 JSON 文件，可在本地编辑后再导入">导出</button>
+        <button id="import-data" type="button" title="从 JSON 文件导入">导入</button>
+        <button id="clear-data" type="button" title="清空全部标记">清空</button>
+        <input id="import-file" type="file" accept=".json,application/json,text/plain" hidden>
+      </div>
+      <!-- 独立访客数（src/visits.js）：随首屏显示，数字先放占位符，数据到了再滚出数字 -->
+      <p id="visits" class="visits">欢迎第 <b class="wait">…</b> 位旅行者到访本站~</p>
+    </section>
+
+    <section id="province" hidden>
+      <div class="province-head">
+        <h2 id="province-name"></h2>
+        <span id="province-progress"></span>
+      </div>
+      <div id="brush" role="toolbar" aria-label="画笔">
+        <span class="label">画笔<small>选中后点城市直接涂色</small></span>
+        <div class="options"></div>
+      </div>
+      <div id="city-list"></div>
+    </section>
+    <!-- 查看模式：创建 / 查看自己的制霸图（面板收起时也保留） -->
+    <div id="view-cta">
+      <a class="cta" href="./"><span class="cta-text">创建我的城市制霸图</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13m-5-5 5 5-5 5"/></svg></a>
+      <p>免费 · 无需注册 · 标记你去过的每一座城市</p>
+    </div>
+  </aside>
+
+  <div id="picker" role="dialog" aria-labelledby="picker-title" hidden>
+    <h2 id="picker-title"></h2>
+    <div class="options"></div>
+  </div>
+
+  <div id="output" role="dialog" aria-modal="true" aria-label="导出的图片" hidden>
+    <img alt="城市制霸">
+    <p>手机端可长按图片保存</p>
+    <button class="btn">关闭</button>
+  </div>
+
+  <!-- 分享：链接里带着全部标记（可选昵称），对方打开即是查看模式 -->
+  <dialog id="share-dialog" aria-labelledby="share-title">
+    <form method="dialog">
+      <h2 id="share-title">分享我的城市制霸图</h2>
+      <p class="share-sum"></p>
+      <label class="share-name"><span>昵称<small>（可选，最多 12 个字）</small></span><input type="text" maxlength="12" placeholder="例如：小明" autocomplete="nickname" enterkeyhint="done"></label>
+      <div class="share-link"><input type="text" readonly aria-label="分享链接"><button type="button" class="btn copy">复制链接</button></div>
+      <!-- 手机上：复制链接后直接打开微信 / QQ，由用户粘贴发送（网页无法直接发给好友） -->
+      <div class="share-apps" hidden>
+        <button type="button" class="btn wechat">复制链接并打开微信</button>
+        <button type="button" class="btn qq">复制链接并打开 QQ</button>
+      </div>
+      <p class="share-hint">提示：点击复制链接，分享给好友吧~</p>
+      <div class="actions"><button value="close" class="btn">关闭</button></div>
+    </form>
+  </dialog>
+
+  <!-- 导入：本机已有数据时选择合并或替换 -->
+  <dialog id="import-dialog" aria-labelledby="import-title">
+    <form method="dialog">
+      <h2 id="import-title">导入数据</h2>
+      <p class="summary"></p>
+      <p class="skipped" hidden></p>
+      <ul class="modes">
+        <li><b>合并</b>保留现有标记，同一城市取较高的等级</li>
+        <li><b>替换</b>清空现有标记，只保留文件里的</li>
+      </ul>
+      <div class="actions">
+        <button value="cancel" class="btn">取消</button>
+        <button value="replace" class="btn">替换</button>
+        <button value="merge" class="btn primary" autofocus>合并</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 导出：内置浏览器无法下载文件时，改为展示文本供复制 -->
+  <dialog id="export-dialog" aria-labelledby="export-title">
+    <form method="dialog">
+      <h2 id="export-title">导出数据</h2>
+      <p>当前浏览器不支持下载文件，请复制下面的内容保存到备忘录等地方，之后可粘贴成 .json 文件导入。</p>
+      <textarea readonly rows="10"></textarea>
+      <div class="actions">
+        <button value="close" class="btn">关闭</button>
+        <button type="button" id="copy-data" class="btn primary">复制</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 清空全部标记：二次确认 -->
+  <dialog id="clear-dialog" aria-labelledby="clear-title">
+    <form method="dialog">
+      <h2 id="clear-title">清空全部标记？</h2>
+      <p class="summary"></p>
+      <div class="actions">
+        <button value="cancel" class="btn" autofocus>取消</button>
+        <button value="export" class="btn">先导出备份</button>
+        <button value="clear" class="btn danger">清空</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+
+  <noscript><p class="noscript">城市制霸需要开启 JavaScript 才能使用。<a href="about.html">查看使用说明</a></p></noscript>
+  <!-- 成就页：顶栏奖杯按钮打开，内容由 achievements-ui.js 生成 -->
+  <div id="achievements" role="dialog" aria-modal="true" aria-labelledby="ach-title" tabindex="-1" hidden>
+    <header class="ach-head">
+      <button class="btn ach-back" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>返回地图</button>
+      <h1 id="ach-title"><span class="ach-title-text">成就</span><svg class="ach-trophy" viewBox="0 0 40 44" aria-hidden="true">
+        <defs>
+          <linearGradient id="tro-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".35" stop-color="#f5c542"/><stop offset=".6" stop-color="#fff0a8"/><stop offset="1" stop-color="#d9981a"/></linearGradient>
+          <clipPath id="tro-clip"><path d="M9 4h22v11c0 7.5-4.8 12.5-11 12.5S9 22.5 9 15z"/><path d="M17 27h6v5h-6z"/><rect x="11" y="32" width="18" height="6" rx="1.5"/></clipPath>
+        </defs>
+        <path d="M9 8H4v3c0 5 3.5 8 8 8M31 8h5v3c0 5-3.5 8-8 8" fill="none" stroke="#222" stroke-width="2.4" stroke-linecap="round"/>
+        <path d="M9 4h22v11c0 7.5-4.8 12.5-11 12.5S9 22.5 9 15z" fill="url(#tro-gold)" stroke="#222" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M17 27h6v5h-6z" fill="url(#tro-gold)" stroke="#222" stroke-width="2.2" stroke-linejoin="round"/>
+        <rect x="11" y="32" width="18" height="6" rx="1.5" fill="url(#tro-gold)" stroke="#222" stroke-width="2.4"/>
+        <path d="M20 9.5l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" fill="#fff" stroke="#222" stroke-width="1.4" stroke-linejoin="round"/>
+        <g clip-path="url(#tro-clip)"><rect class="tro-glint" x="-8" y="-4" width="7" height="50" fill="#fff" opacity=".75" transform="rotate(20 20 22)"/></g>
+        <path class="tro-spark" d="M4 2l1 2.4L7.4 3.4 5 4.4 4 6.8 3 4.4.6 3.4 3 2.4z" fill="#ffe57e" stroke="#222" stroke-width=".9"/>
+        <path class="tro-spark" style="animation-delay:.8s" d="M36 22l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" fill="#ffe57e" stroke="#222" stroke-width=".8"/>
+        <path class="tro-spark" style="animation-delay:1.6s" d="M35 1.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z" fill="#fff" stroke="#222" stroke-width=".7"/>
+      </svg></h1>
+    </header>
+    <div class="ach-main">
+      <div class="ach-summary"></div>
+      <!-- 筛选与"全部标为已看"同一行：后者消失时行高不变，下方内容不跳动 -->
+      <div class="ach-tools">
+        <div class="ach-filter" role="group" aria-label="筛选">
+          <button type="button" data-filter="all">全部</button><button type="button" data-filter="done">已解锁</button><button type="button" data-filter="todo">未解锁</button>
+        </div>
+        <button class="ach-read" type="button" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><span class="long">全部标为已看</span><span class="short">全部已看</span><b></b>
+        </button>
+      </div>
+      <div class="ach-body"></div>
+    </div>
+    <!-- 点开已解锁的卡片：放大展示 -->
+    <div class="ach-show" hidden><p class="ach-show-desc"></p><div class="ach-stage"></div><p class="ach-show-hint">点击任意处关闭</p></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
