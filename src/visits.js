@@ -1,9 +1,9 @@
-// 访问次数：不蒜子（busuanzi.ibruce.info，免费第三方计数，请求不经过 Vercel，不增加 Edge Requests）。
+// 访问次数：Vercount（events.vercount.one，免费第三方计数，请求不经过 Vercel，不增加 Edge Requests）。
+// LTS 1.3.7 起由不蒜子（busuanzi.ibruce.info）改为 Vercount：不蒜子长时间 502 / 超时，数字一直加载不出来。
 // 显示在全国视图统计卡片底部："小站第 N 次接待访问，欢迎各位旅行者~"，数字以里程表式滚动停到最终值。
 //
-// 显示全站访问次数（site_pv）而不是访客数（site_uv）：不蒜子没有只读接口，每次取数都会计数；
-// 访客数靠第三方 cookie 去重，iPhone / 微信等会拦截而重复计入，只能缓存、数字长期不动。
-// 访问次数本来就是"每打开一次加一"，每次打开都请求既准确，数字也随访问实时上涨。
+// 显示全站访问次数（site_pv）而不是访客数（site_uv）：访问次数本来就是"每打开一次加一"，
+// 每次打开都 POST 计数一次，返回值既准确，数字也随访问实时上涨。不报新访客（isNewUv: false），不写 cookie。
 // 这句话随首屏一起显示，数字位置先放占位符"…"，数据到了再滚出数字；请求失败就一直显示占位符。
 // （以前整行等数据到了才淡入，成了页面最晚画出的最大文字，把 LCP 拖到 2 秒多）
 // 只在正式域名上请求，本地开发、测试不污染数据，这一行在模块加载时就移除，不会闪一下
@@ -28,20 +28,17 @@ const show = n => {
   requestAnimationFrame(() => requestAnimationFrame(() => num.classList.add('done'))); // 先画出起始位置，再开始滚动
 };
 
-export const initVisits = () => {
+export const initVisits = async () => {
   try { localStorage.removeItem('china-ex-city:visits'); } catch { /* LTS 1.3.0～1.3.1 的访客数缓存，已不再使用 */ }
   if (!line.isConnected) return;
-  const cb = `bsz_${Math.random().toString(36).slice(2)}`;
-  const s = document.createElement('script');
-  const cleanup = () => { delete window[cb]; s.remove(); };
-  window[cb] = d => {
-    cleanup();
-    const n = Number(d?.site_pv);
-    if (n) show(n);
-  };
-  s.src = `https://busuanzi.ibruce.info/busuanzi?jsonpCallback=${cb}`;
-  s.referrerPolicy = 'no-referrer-when-downgrade'; // 不蒜子按来源网址区分站点
-  s.async = true;
-  s.onerror = cleanup;
-  document.head.append(s);
+  try {
+    const r = await fetch('https://events.vercount.one/api/v2/log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: `https://${HOST}/`, isNewUv: false }), // Vercount 按网址的域名区分站点
+      signal: AbortSignal.timeout(8000),
+    });
+    const n = Number((await r.json())?.data?.site_pv);
+    if (r.ok && n) show(n);
+  } catch { /* 失败或超时：保持占位符 */ }
 };
