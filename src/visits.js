@@ -1,5 +1,6 @@
 // 访问次数：Vercount（events.vercount.one，免费第三方计数，请求不经过 Vercel，不增加 Edge Requests）。
 // LTS 1.3.7 起由不蒜子（busuanzi.ibruce.info）改为 Vercount：不蒜子长时间 502 / 超时，数字一直加载不出来。
+// 直接显示 Vercount 的 site_pv，不再加基数：接入前的访问次数和不蒜子时期的计数已在 vercount.one 后台并入 site_pv。
 // 显示在全国视图统计卡片底部："小站第 N 次接待访问，欢迎各位旅行者~"，数字以里程表式滚动停到最终值。
 //
 // 显示全站访问次数（site_pv）而不是访客数（site_uv）：访问次数本来就是"每打开一次加一"，
@@ -8,7 +9,6 @@
 // （以前整行等数据到了才淡入，成了页面最晚画出的最大文字，把 LCP 拖到 2 秒多）
 // 只在正式域名上请求，本地开发、测试不污染数据，这一行在模块加载时就移除，不会闪一下
 const HOST = 'china.loveyou.moe';
-const BASE = 1528; // 接入不蒜子之前的访问次数（Vercel Analytics 的 Page Views）
 
 const line = document.querySelector('#visits');
 const num = line.querySelector('b');
@@ -17,7 +17,7 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 // 里程表：每一位数字是一列 0～9 竖排，滚动（多转几圈）后停在目标数字上；从个位开始依次停下
 const show = n => {
-  const text = (n + BASE).toLocaleString('zh-CN');
+  const text = n.toLocaleString('zh-CN');
   const digits = [...text];
   // 读屏软件读隐藏的完整数字，里程表各列只是视觉效果（<b> 不能用 aria-label）
   num.innerHTML = `<span class="vh">${text}</span>` + digits.map((c, i) => /\d/.test(c)
