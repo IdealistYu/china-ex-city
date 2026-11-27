@@ -17,6 +17,7 @@ import { setExportTarget } from './image-ui.js';
 import './backup-ui.js';
 import { ACHIEVEMENTS_HASH } from './achievements-ui.js';
 import './share-ui.js';
+import './donate-ui.js';
 import './view-ui.js';
 import { initVisits } from './visits.js';
 import { $, narrowScreen } from './dom.js';

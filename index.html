@@ -120,7 +120,11 @@
         <input id="import-file" type="file" accept=".json,application/json,text/plain" hidden>
       </div>
       <!-- 独立访客数（src/visits.js）：随首屏显示，数字先放占位符，数据到了再滚出数字 -->
-      <p id="visits" class="visits">欢迎第 <b class="wait">…</b> 位旅行者到访本站~</p>
+      <div class="panel-foot">
+        <p id="visits" class="visits">欢迎第 <b class="wait">…</b> 位旅行者到访本站~</p>
+        <!-- 打赏入口（src/donate-ui.js）：与访客数同一行，放不下时换行 -->
+        <button id="donate" type="button" title="请作者喝杯奶茶"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="straw" d="M14.2 1.8 12.6 8"/><path class="tea" d="M7.3 13.2h9.4l-.85 6.9a1.6 1.6 0 0 1-1.6 1.4H9.75a1.6 1.6 0 0 1-1.6-1.4z"/><path d="M6.6 9.6h10.8l-1.25 10.5a1.6 1.6 0 0 1-1.6 1.4H9.45a1.6 1.6 0 0 1-1.6-1.4z"/><path class="lid" d="M5.4 9.6h13.2M6.8 9.6a5.2 3 0 0 1 10.4 0"/><g class="boba"><circle cx="10" cy="18.3" r=".95"/><circle cx="12.4" cy="19.1" r=".95"/><circle cx="14.2" cy="17.4" r=".95"/><circle cx="11.3" cy="16.4" r=".95"/></g></svg>请作者喝奶茶</button>
+      </div>
     </section>
 
     <section id="province" hidden>
@@ -165,6 +169,22 @@
         <button type="button" class="btn qq">复制链接并打开 QQ</button>
       </div>
       <p class="share-hint">提示：点击复制链接，分享给好友吧~</p>
+      <div class="actions"><button value="close" class="btn">关闭</button></div>
+    </form>
+  </dialog>
+
+  <!-- 打赏：微信赞赏码（public/pay/zan.jpg，小程序码，只能用微信扫码或长按识别） -->
+  <dialog id="donate-dialog" aria-labelledby="donate-title">
+    <form method="dialog">
+      <h2 id="donate-title">请作者喝杯奶茶</h2>
+      <p class="donate-lead">城市制霸免费、无广告，由作者业余时间维护。如果它帮你记下了旅途，欢迎打赏~</p>
+      <figure class="donate-code">
+        <img alt="微信赞赏码" width="516" height="516">
+        <figcaption>打开微信「扫一扫」</figcaption>
+      </figure>
+      <div class="donate-apps" hidden>
+        <button type="button" class="btn save-code">保存赞赏码</button>
+      </div>
       <div class="actions"><button value="close" class="btn">关闭</button></div>
     </form>
   </dialog>

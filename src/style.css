@@ -614,3 +614,31 @@ html:not([data-mode="view"]) :is(#view-head, #view-ach, #view-cta) { display: no
 .visits .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; } /* 只给读屏软件读的数字 */
 [data-mode="view"] .visits, #panel.collapsed .visits { display: none; }
 @media (prefers-reduced-motion: reduce) { .odo-col { transition: none; } }
+
+/* ============ 打赏 ============ */
+/* 面板底部一行：访客数 + 打赏入口，放不下时换行 */
+.panel-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; padding-top: 8px; border-top: 1.5px dashed var(--divider); }
+.panel-foot .visits { padding-top: 0; border-top: 0; }
+#donate {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 2px 9px 2px 6px;
+  border: 1.5px solid var(--ink); border-radius: 6px; background: var(--l4); color: var(--ink); font-size: 12px;
+  box-shadow: 1.5px 2px 0 var(--shadow); transition: transform .1s, box-shadow .1s;
+}
+/* 奶茶杯：白杯身、奶茶色液面、珍珠、吸管 */
+#donate svg { width: 18px; height: 18px; fill: #fff; stroke: var(--ink); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+#donate svg .tea { fill: #e9c79b; stroke: none; }
+#donate svg .boba { fill: var(--ink); stroke: none; }
+#donate svg .straw { stroke-width: 1.9; }
+#donate:active { transform: translate(1px, 1px); box-shadow: .5px 1px 0 var(--shadow); }
+@media (hover: hover) { #donate:hover { filter: brightness(1.04); } }
+@media (pointer: coarse) { #donate { padding: 4px 12px 4px 8px; font-size: 13px; } }
+[data-mode="view"] .panel-foot, #panel.collapsed .panel-foot { display: none; }
+
+#donate-dialog { width: min(360px, calc(100vw - 32px)); }
+.donate-lead { color: var(--muted); }
+.donate-code { margin: 4px 0 12px; text-align: center; }
+.donate-code img { display: block; width: 200px; height: 200px; margin: 0 auto; border: 2px solid var(--ink); border-radius: 10px; background: #fff; }
+.donate-code figcaption { margin-top: 10px; padding: 8px 10px; border-radius: 8px; background: var(--soft); font-size: 14px; } /* 与分享弹窗的提示框同款 */
+.donate-apps { display: flex; gap: 8px; margin-bottom: 12px; }
+.donate-apps .btn { flex: 1; justify-content: center; padding-left: 6px; padding-right: 6px; }
+.donate-apps [hidden] { display: none; }
