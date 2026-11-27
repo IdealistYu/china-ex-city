@@ -4,7 +4,7 @@
 
 **在线使用：[china.loveyou.moe](https://china.loveyou.moe)**
 
-![全国足迹图](docs/preview.png)
+<p align="center"><img src="docs/readme/country.jpg" alt="全国视图：去过的城市按等级上色，左下角是分数与各等级统计" width="720"></p>
 
 ## 功能
 
@@ -12,7 +12,7 @@
 
 全国视图点击省份，地图平滑放大到该省，给每个城市标记等级；点邻省直接切换，点海面或按返回键回到全国。支持滚轮、触控板和双指缩放。
 
-![省视图](docs/screen-province.jpg)
+<p align="center"><img src="docs/readme/province.jpg" alt="省视图：浙江省各城市按等级上色，右侧是画笔与城市列表" width="600"></p>
 
 ### 五个等级
 
@@ -28,18 +28,42 @@
 
 ### 保存分享图
 
-- **全国视图**：导出全国足迹图（见页首）。
+- **全国视图**：导出全国足迹图，带分数和各等级统计。
 - **省视图**：导出该省的"XX制霸"竖图，标出每个城市的名字；全省点亮会盖上"全制霸"印章。
 
-![单省导出图](docs/export-province.png)
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/readme/export-country.jpg" alt="全国足迹图" width="340"></td>
+    <td align="center"><img src="docs/readme/export-province.jpg" alt="单省制霸图：浙江全省点亮，盖有全制霸印章" width="240"></td>
+  </tr>
+  <tr>
+    <td align="center">全国足迹图</td>
+    <td align="center">单省制霸图</td>
+  </tr>
+</table>
 
 ### 成就
 
 右上角的奖杯按钮打开成就页：33 个成就按足迹、省份、等级、地理、分数分类，以铜、银、金、传说四档稀有度的卡牌展示，标记城市时自动解锁；新解锁的卡片带 NEW 标记，点开可以放大欣赏。
 
-### 分享
+<p align="center"><img src="docs/readme/achievements.jpg" alt="成就页：已解锁的卡牌带铜、银等稀有度，未解锁的显示进度" width="600"></p>
 
-右上角的分享按钮生成一条链接（可以附上昵称），复制发给朋友，对方打开就能看到你的城市制霸图与成就统计。
+### 分享链接
+
+右上角的分享按钮生成一条链接（可以附上昵称），复制发给朋友即可；手机上还能复制后直接打开微信或 QQ。
+
+对方打开链接进入**查看模式**：看到你的城市制霸图、分数、各等级数量和成就统计，也可以点进各省查看。查看模式只读，不会改动对方自己的标记；底部的按钮可以开始创建自己的制霸图。
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="docs/readme/share.jpg" alt="分享弹窗：填写昵称、复制链接" width="220"></td>
+    <td align="center"><img src="docs/readme/view.jpg" alt="查看模式：朋友打开链接后看到的制霸图与成就统计" width="220"></td>
+  </tr>
+  <tr>
+    <td align="center">生成分享链接</td>
+    <td align="center">朋友打开后的查看模式</td>
+  </tr>
+</table>
 
 ### 数据保存
 
