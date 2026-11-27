@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>请作者喝杯奶茶 - 城市制霸</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f3efe6">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <!-- 二合一付款码（public/pay/tip.png）扫码后的落地页：按扫码的 App 分流。
+       支付宝：直接跳转支付宝收款码；微信：网页无法跳到 wxp://，显示微信收款码让人长按识别；其他：显示二合一码。
+       换收款码：改这里的 ALIPAY 与 scripts/build-pay.mjs，再同步 src/donate-ui.js -->
+  <script>
+    const ALIPAY = 'https://qr.alipay.com/fkx193676gg1kaewegy2f1d';
+    const ua = navigator.userAgent;
+    const app = /AlipayClient/i.test(ua) ? 'alipay' : /MicroMessenger/i.test(ua) ? 'wechat' : 'other';
+    if (app === 'alipay') location.replace(ALIPAY);
+    document.documentElement.dataset.app = app;
+  </script>
+  <style>
+    :root { --bg: #f3efe6; --ink: #222; --muted: #6b665c; --soft: #f7f4ee; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; min-height: 100dvh; display: flex; align-items: center; justify-content: center;
+      padding: 24px 16px; background: var(--bg); color: var(--ink);
+      font: 16px/1.6 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif;
+    }
+    .card {
+      width: min(360px, 100%); padding: 24px 22px 20px; text-align: center;
+      background: #fff; border: 2px solid var(--ink); border-radius: 14px; box-shadow: 4px 6px 0 rgba(0,0,0,.12);
+    }
+    h1 { margin: 0 0 6px; font-size: 22px; }
+    .lead { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+    img { display: block; width: 220px; max-width: 100%; height: auto; margin: 0 auto; border: 2px solid var(--ink); border-radius: 10px; }
+    .hint { margin: 14px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--soft); font-size: 14px; }
+    .btn {
+      display: block; margin: 12px 0 0; padding: 9px 12px; border: 2px solid var(--ink); border-radius: 8px;
+      background: #b8d0ff; color: var(--ink); font-weight: 600; text-decoration: none; box-shadow: 2px 3px 0 rgba(0,0,0,.12);
+    }
+    @media (hover: hover) and (pointer: fine) { .btn { display: none; } } /* 电脑上打不开支付宝 App */
+    .back { display: inline-block; margin-top: 16px; color: var(--muted); font-size: 13px; }
+    /* 按 App 显示：微信里只显示微信收款码；其他浏览器显示二合一码（不支持脚本时也是这一种） */
+    .wechat { display: none; }
+    [data-app="wechat"] .wechat { display: block; }
+    [data-app="wechat"] .other { display: none; }
+    [data-app="alipay"] .card { visibility: hidden; }
+  </style>
+</head>
+<body>
+<main class="card">
+  <h1>请作者喝杯奶茶</h1>
+  <p class="lead">城市制霸免费、无广告，欢迎打赏~</p>
+
+  <div class="wechat">
+    <img src="/pay/wechat.png" alt="微信收款码" width="512" height="512">
+    <p class="hint">长按二维码，选择「识别图中的二维码」</p>
+  </div>
+
+  <div class="other">
+    <img src="/pay/tip.png" alt="打赏二维码（微信、支付宝通用）" width="512" height="512">
+    <p class="hint">打开微信或支付宝「扫一扫」</p>
+    <a class="btn" href="https://qr.alipay.com/fkx193676gg1kaewegy2f1d">已安装支付宝？直接打开付款</a>
+  </div>
+
+  <a class="back" href="/">← 回到城市制霸</a>
+</main>
+</body>
+</html>
