@@ -63,7 +63,8 @@ button:disabled { cursor: progress; opacity: .7; }
 [hidden] { display: none !important; }
 /* 自定义样式的按钮统一给出键盘焦点框（鼠标点击不显示） */
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.noscript { margin: 40vh 16px 0; text-align: center; }
+.noscript { max-width: 36em; margin: 30vh auto 0; padding: 0 16px; text-align: center; line-height: 1.7; }
+.noscript h1 { font-size: 22px; margin: 0 0 12px; }
 [data-busy] { cursor: wait; }
 [data-busy] body { pointer-events: none; }
 
